@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Search Hotels — Velour</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    body { background: var(--navy-deep); }
+
+    .search-page-header {
+      background: var(--navy-mid);
+      border-bottom: 1px solid var(--gold-border);
+      padding: 1rem 0;
+      position: sticky; top: 0; z-index: 200;
+    }
+
+    .search-layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 2rem;
+      padding: 2.5rem 0;
+    }
+
+    /* Room list card (horizontal) */
+    .room-result {
+      background: var(--surface-1);
+      border: 1px solid var(--gold-border);
+      border-radius: var(--radius-lg);
+      display: grid;
+      grid-template-columns: 220px 1fr auto;
+      overflow: hidden;
+      transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+      margin-bottom: 1rem;
+    }
+    .room-result:hover {
+      transform: translateX(4px);
+      box-shadow: -4px 0 0 var(--gold), var(--shadow);
+      border-color: rgba(201,168,76,0.4);
+    }
+    .room-result-img {
+      position: relative;
+      overflow: hidden;
+    }
+    .room-result-img-bg {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 3.5rem; color: rgba(201,168,76,0.15);
+      transition: transform 0.5s ease;
+    }
+    .room-result:hover .room-result-img-bg { transform: scale(1.05); }
+
+    .room-result-body { padding: 1.5rem; }
+    .room-result-name { font-family: var(--font-display); font-size: 1.3rem; color: var(--pearl); margin-bottom: 0.25rem; }
+    .room-result-hotel { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem; }
+    .room-result-features { display: flex; gap: 1.25rem; margin-bottom: 1rem; font-size: 0.8rem; color: var(--pearl-dim); flex-wrap: wrap; }
+    .room-result-feature { display: flex; align-items: center; gap: 0.35rem; }
+
+    .room-result-action {
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      justify-content: space-between;
+      border-left: 1px solid var(--gold-border);
+      min-width: 160px;
+    }
+
+    .sort-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .sort-options { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .sort-btn {
+      padding: 0.4rem 0.9rem;
+      background: var(--surface-2);
+      border: 1px solid var(--gold-border);
+      border-radius: 99px;
+      font-size: 0.78rem;
+      color: var(--pearl-dim);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .sort-btn.active, .sort-btn:hover {
+      background: var(--gold-wash);
+      border-color: var(--gold);
+      color: var(--gold-bright);
+    }
+
+    /* Hotel group header */
+    .hotel-group-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.25rem;
+      background: var(--surface-2);
+      border: 1px solid var(--gold-border);
+      border-radius: var(--radius-lg);
+      margin-bottom: 0.75rem;
+      cursor: pointer;
+      transition: background var(--transition);
+    }
+    .hotel-group-header:hover { background: var(--surface-3); }
+    .hotel-group-name { font-family: var(--font-display); font-size: 1.2rem; color: var(--pearl); }
+
+    /* Filter star rating */
+    .star-filter { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.5rem; }
+    .star-pill {
+      padding: 0.3rem 0.7rem;
+      background: var(--surface-2);
+      border: 1px solid var(--gold-border);
+      border-radius: 99px;
+      font-size: 0.75rem;
+      color: var(--pearl-dim);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .star-pill.active { background: var(--gold-wash); border-color: var(--gold); color: var(--gold-bright); }
+
+    /* Map placeholder */
+    .map-placeholder {
+      background: var(--surface-2);
+      border: 1px solid var(--gold-border);
+      border-radius: var(--radius-lg);
+      height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 0.5rem;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-bottom: 1.5rem;
+    }
+
+    @media (max-width: 900px) {
+      .search-layout { grid-template-columns: 1fr; }
+      .filter-sidebar { display: none; }
+      .room-result { grid-template-columns: 1fr; }
+      .room-result-img { height: 160px; }
+      .room-result-action { flex-direction: row; align-items: center; border-left: none; border-top: 1px solid var(--gold-border); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Search Header ─────────────────────────────────────── -->
+  <div class="search-page-header">
+    <div class="container">
+      <div class="flex items-center gap" style="flex-wrap:wrap;">
+        <a href="index.html" style="font-family:var(--font-display);font-size:1.4rem;color:var(--pearl);text-decoration:none;flex-shrink:0;">Velour</a>
+
+        <!-- Compact search bar -->
+        <div class="search-bar" style="flex:1;min-width:300px;max-width:780px;padding:0.4rem;">
+          <div class="search-field">
+            <label><i class="fa-solid fa-location-dot"></i> Destination</label>
+            <input type="text" id="qCity" placeholder="City or hotel" />
+          </div>
+          <div class="search-divider"></div>
+          <div class="search-field">
+            <label><i class="fa-regular fa-calendar"></i> Check-in</label>
+            <input type="date" id="qIn" />
+          </div>
+          <div class="search-divider"></div>
+          <div class="search-field">
+            <label><i class="fa-regular fa-calendar"></i> Check-out</label>
+            <input type="date" id="qOut" />
+          </div>
+          <div class="search-divider"></div>
+          <div class="search-field" style="max-width:80px;">
+            <label><i class="fa-solid fa-user"></i> Guests</label>
+            <input type="number" id="qGuests" value="2" min="1" max="10" />
+          </div>
+          <button class="btn btn-primary" onclick="runSearch()" style="border-radius:var(--radius-xl);flex-shrink:0;">
+            <i class="fa-solid fa-magnifying-glass"></i>
+          </button>
+        </div>
+
+        <div class="flex gap-sm" style="margin-left:auto;">
+          <a href="login.html" class="btn btn-ghost btn-sm">Sign In</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Main layout ───────────────────────────────────────── -->
+  <div class="container">
+    <div class="search-layout">
+
+      <!-- ── Filter Sidebar ─────────────────────────────────── -->
+      <aside>
+        <div class="filter-sidebar">
+          <div style="font-family:var(--font-display);font-size:1.1rem;color:var(--pearl);margin-bottom:1.25rem;">Filters</div>
+
+          <!-- Price range -->
+          <div class="filter-section">
+            <div class="filter-title">Price per night</div>
+            <input type="range" id="priceRange" min="1000" max="25000" value="25000" oninput="updatePrice(this.value)" />
+            <div class="range-labels">
+              <span>₹1,000</span>
+              <span id="priceLabel">Up to ₹25,000</span>
+            </div>
+          </div>
+
+          <!-- Star rating -->
+          <div class="filter-section">
+            <div class="filter-title">Star rating</div>
+            <div class="star-filter">
+              <span class="star-pill" onclick="toggleStar(this)">★ 1</span>
+              <span class="star-pill" onclick="toggleStar(this)">★★ 2</span>
+              <span class="star-pill" onclick="toggleStar(this)">★★★ 3</span>
+              <span class="star-pill active" onclick="toggleStar(this)">★★★★ 4</span>
+              <span class="star-pill active" onclick="toggleStar(this)">★★★★★ 5</span>
+            </div>
+          </div>
+
+          <!-- Amenities -->
+          <div class="filter-section">
+            <div class="filter-title">Amenities</div>
+            <label class="check-item"><input type="checkbox" checked /> Wi-Fi</label>
+            <label class="check-item"><input type="checkbox" checked /> Swimming Pool</label>
+            <label class="check-item"><input type="checkbox" /> Spa</label>
+            <label class="check-item"><input type="checkbox" /> Restaurant</label>
+            <label class="check-item"><input type="checkbox" /> Gym</label>
+            <label class="check-item"><input type="checkbox" /> Free Parking</label>
+            <label class="check-item"><input type="checkbox" /> Airport Shuttle</label>
+            <label class="check-item"><input type="checkbox" /> Pet Friendly</label>
+          </div>
+
+          <!-- Room type -->
+          <div class="filter-section">
+            <div class="filter-title">Room type</div>
+            <label class="check-item"><input type="checkbox" checked /> Standard</label>
+            <label class="check-item"><input type="checkbox" checked /> Deluxe</label>
+            <label class="check-item"><input type="checkbox" checked /> Suite</label>
+            <label class="check-item"><input type="checkbox" /> Villa / Cottage</label>
+          </div>
+
+          <!-- Occupancy -->
+          <div class="filter-section">
+            <div class="filter-title">Beds</div>
+            <label class="check-item"><input type="checkbox" /> Single</label>
+            <label class="check-item"><input type="checkbox" checked /> Double / Twin</label>
+            <label class="check-item"><input type="checkbox" /> King</label>
+            <label class="check-item"><input type="checkbox" /> Family</label>
+          </div>
+
+          <button class="btn btn-outline" style="width:100%;justify-content:center;margin-top:0.5rem;" onclick="applyFilters()">
+            Apply Filters
+          </button>
+          <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center;margin-top:0.5rem;" onclick="clearFilters()">
+            Clear all
+          </button>
+        </div>
+
+        <!-- Map placeholder -->
+        <div class="map-placeholder" style="margin-top:1rem;">
+          <i class="fa-solid fa-map-location-dot" style="font-size:2rem;color:var(--gold-dim);"></i>
+          <span>Map view</span>
+          <button class="btn btn-ghost btn-sm" onclick="showToast('Map view coming soon','info')">Enable</button>
+        </div>
+      </aside>
+
+      <!-- ── Results Panel ───────────────────────────────────── -->
+      <div>
+        <!-- Sort bar -->
+        <div class="sort-bar">
+          <div>
+            <span id="resultCount" style="font-weight:500;color:var(--pearl);">9 rooms</span>
+            <span style="color:var(--text-muted);font-size:0.875rem;"> across 3 hotels</span>
+            <span style="color:var(--text-muted);font-size:0.75rem;margin-left:0.5rem;" id="searchMeta"></span>
+          </div>
+          <div class="sort-options">
+            <button class="sort-btn active" onclick="setSort(this,'recommended')">Recommended</button>
+            <button class="sort-btn" onclick="setSort(this,'price-asc')">Price ↑</button>
+            <button class="sort-btn" onclick="setSort(this,'price-desc')">Price ↓</button>
+            <button class="sort-btn" onclick="setSort(this,'rating')">Top Rated</button>
+          </div>
+        </div>
+
+        <!-- ── Hotel 1 ──────────────────────────────────────── -->
+        <div class="hotel-group-header" onclick="toggleGroup('g1')">
+          <div>
+            <div class="hotel-group-name">The Meridian Grand</div>
+            <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.15rem;">
+              <i class="fa-solid fa-location-dot"></i> Mumbai ·
+              <span style="color:var(--gold);">★★★★★</span> ·
+              <span class="badge badge-green" style="margin-left:0.4rem;"><span class="status-dot dot-confirmed"></span> 4 rooms available</span>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-down" id="g1-icon" style="color:var(--gold);transition:transform 0.3s;"></i>
+        </div>
+
+        <div id="g1">
+          <!-- Standard Room -->
+          <div class="room-result">
+            <div class="room-result-img">
+              <div class="room-result-img-bg" style="background:linear-gradient(135deg,#0D2A42,#1A4060);">
+                <i class="fa-solid fa-bed"></i>
+              </div>
+            </div>
+            <div class="room-result-body">
+              <div class="room-result-name">Standard Double</div>
+              <div class="room-result-hotel"><i class="fa-solid fa-building"></i> The Meridian Grand, Mumbai</div>
+              <div class="room-result-features">
+                <span class="room-result-feature"><i class="fa-solid fa-ruler-combined" style="color:var(--gold);"></i> 28 m²</span>
+                <span class="room-result-feature"><i class="fa-solid fa-bed" style="color:var(--gold);"></i> 1 Double Bed</span>
+                <span class="room-result-feature"><i class="fa-solid fa-users" style="color:var(--gold);"></i> Up to 2 guests</span>
+                <span class="room-result-feature"><i class="fa-solid fa-wifi" style="color:var(--gold);"></i> Wi-Fi</span>
+                <span class="room-result-feature"><i class="fa-solid fa-snowflake" style="color:var(--gold);"></i> A/C</span>
+              </div>
+              <div class="amenity-list">
+                <span class="amenity-pill"><i class="fa-solid fa-mug-hot"></i> Breakfast incl.</span>
+                <span class="amenity-pill"><i class="fa-solid fa-rotate-left"></i> Free cancellation</span>
+              </div>
+            </div>
+            <div class="room-result-action">
+              <div class="text-center">
+                <div style="font-family:var(--font-display);font-size:1.8rem;font-weight:300;color:var(--pearl);">₹5,200</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);">per night</div>
+                <div style="font-size:0.72rem;color:var(--gold);margin-top:0.2rem;">₹18,720 total</div>
+              </div>
+              <button class="btn btn-primary btn-sm" style="width:100%;justify-content:center;margin-top:0.75rem;" onclick="bookRoom('meridian','standard')">
+                Select
+              </button>
+              <div class="badge badge-rose" style="margin-top:0.5rem;width:100%;justify-content:center;">Only 2 left</div>
+            </div>
+          </div>
+
+          <!-- Deluxe King -->
+          <div class="room-result">
+            <div class="room-result-img">
+              <div class="room-result-img-bg" style="background:linear-gradient(225deg,#162C45,#1E3D5C);">
+                <i class="fa-solid fa-crown"></i>
+              </div>
+            </div>
+            <div class="room-result-body">
+              <div class="room-result-name">Deluxe King <span class="badge badge-gold" style="font-size:0.65rem;vertical-align:middle;margin-left:0.4rem;">Popular</span></div>
+              <div class="room-result-hotel"><i class="fa-solid fa-building"></i> The Meridian Grand, Mumbai</div>
+              <div class="room-result-features">
+                <span class="room-result-feature"><i class="fa-solid fa-ruler-combined" style="color:var(--gold);"></i> 42 m²</span>
+                <span class="room-result-feature"><i class="fa-solid fa-bed" style="color:var(--gold);"></i> King Bed</span>
+                <span class="room-result-feature"><i class="fa-solid fa-users" style="color:var(--gold);"></i> Up to 3 guests</span>
+                <span class="room-result-feature"><i class="fa-solid fa-city" style="color:var(--gold);"></i> City view</span>
+              </div>
+              <div class="amenity-list">
+                <span class="amenity-pill"><i class="fa-solid fa-mug-hot"></i> Breakfast incl.</span>
+                <span class="amenity-pill"><i class="fa-solid fa-spa"></i> Spa access</span>
+                <span class="amenity-pill"><i class="fa-solid fa-rotate-left"></i> Free cancellation</span>
+              </div>
+            </div>
+            <div class="room-result-action">
+              <div class="text-center">
+                <div style="font-family:var(--font-display);font-size:1.8rem;font-weight:300;color:var(--pearl);">₹8,200</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);">per night</div>
+                <div style="font-size:0.72rem;color:var(--gold);margin-top:0.2rem;">₹29,520 total</div>
+              </div>
+              <button class="btn btn-primary btn-sm" style="width:100%;justify-content:center;margin-top:0.75rem;" onclick="bookRoom('meridian','deluxe')">
+                Select
+              </button>
+            </div>
+          </div>
+
+          <!-- Superior Suite -->
+          <div class="room-result">
+            <div class="room-result-img">
+              <div class="room-result-img-bg" style="background:linear-gradient(315deg,#1A3050,#243E5A);">
+                <i class="fa-solid fa-star"></i>
+              </div>
+            </div>
+            <div class="room-result-body">
+              <div class="room-result-name">Superior Suite</div>
+              <div class="room-result-hotel"><i class="fa-solid fa-building"></i> The Meridian Grand, Mumbai</div>
+              <div class="room-result-features">
+                <span class="room-result-feature"><i class="fa-solid fa-ruler-combined" style="color:var(--gold);"></i> 75 m²</span>
+                <span class="room-result-feature"><i class="fa-solid fa-bed" style="color:var(--gold);"></i> King + Sofa</span>
+                <span class="room-result-feature"><i class="fa-solid fa-users" style="color:var(--gold);"></i> Up to 4 guests</span>
+                <span class="room-result-feature"><i class="fa-solid fa-water" style="color:var(--gold);"></i> Sea view</span>
+              </div>
+              <div class="amenity-list">
+                <span class="amenity-pill"><i class="fa-solid fa-mug-hot"></i> Breakfast incl.</span>
+                <span class="amenity-pill"><i class="fa-solid fa-car"></i> Valet parking</span>
+                <span class="amenity-pill"><i class="fa-solid fa-spa"></i> Spa access</span>
+                <span class="amenity-pill"><i class="fa-solid fa-rotate-left"></i> Free cancellation</span>
+              </div>
+            </div>
+            <div class="room-result-action">
+              <div class="text-center">
+                <div style="font-family:var(--font-display);font-size:1.8rem;font-weight:300;color:var(--pearl);">₹14,500</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);">per night</div>
+                <div style="font-size:0.72rem;color:var(--gold);margin-top:0.2rem;">₹52,200 total</div>
+              </div>
+              <button class="btn btn-primary btn-sm" style="width:100%;justify-content:center;margin-top:0.75rem;" onclick="bookRoom('meridian','suite')">
+                Select
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Hotel 2 ──────────────────────────────────────── -->
+        <div class="hotel-group-header" onclick="toggleGroup('g2')" style="margin-top:1.5rem;">
+          <div>
+            <div class="hotel-group-name">Harbour Suites Bengaluru</div>
+            <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.15rem;">
+              <i class="fa-solid fa-location-dot"></i> Bengaluru ·
+              <span style="color:var(--gold);">★★★★</span> ·
+              <span class="badge badge-green" style="margin-left:0.4rem;"><span class="status-dot dot-confirmed"></span> 3 rooms available</span>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-down" id="g2-icon" style="color:var(--gold);transition:transform 0.3s;"></i>
+        </div>
+
+        <div id="g2">
+          <div class="room-result">
+            <div class="room-result-img">
+              <div class="room-result-img-bg" style="background:linear-gradient(135deg,#0F2035,#1A3050);">
+                <i class="fa-solid fa-city"></i>
+              </div>
+            </div>
+            <div class="room-result-body">
+              <div class="room-result-name">Standard Twin</div>
+              <div class="room-result-hotel"><i class="fa-solid fa-building"></i> Harbour Suites, Bengaluru</div>
+              <div class="room-result-features">
+                <span class="room-result-feature"><i class="fa-solid fa-ruler-combined" style="color:var(--gold);"></i> 24 m²</span>
+                <span class="room-result-feature"><i class="fa-solid fa-bed" style="color:var(--gold);"></i> 2 Single Beds</span>
+                <span class="room-result-feature"><i class="fa-solid fa-users" style="color:var(--gold);"></i> Up to 2 guests</span>
+              </div>
+              <div class="amenity-list">
+                <span class="amenity-pill"><i class="fa-solid fa-rotate-left"></i> Free cancellation</span>
+              </div>
+            </div>
+            <div class="room-result-action">
+              <div class="text-center">
+                <div style="font-family:var(--font-display);font-size:1.8rem;font-weight:300;color:var(--pearl);">₹3,600</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);">per night</div>
+              </div>
+              <button class="btn btn-primary btn-sm" style="width:100%;justify-content:center;margin-top:0.75rem;" onclick="bookRoom('harbour','standard')">Select</button>
+            </div>
+          </div>
+
+          <div class="room-result">
+            <div class="room-result-img">
+              <div class="room-result-img-bg" style="background:linear-gradient(225deg,#162840,#1E3558);">
+                <i class="fa-solid fa-dumbbell"></i>
+              </div>
+            </div>
+            <div class="room-result-body">
+              <div class="room-result-name">Deluxe King <span class="badge badge-gold" style="font-size:0.65rem;vertical-align:middle;margin-left:0.4rem;">Best value</span></div>
+              <div class="room-result-hotel"><i class="fa-solid fa-building"></i> Harbour Suites, Bengaluru</div>
+              <div class="room-result-features">
+                <span class="room-result-feature"><i class="fa-solid fa-ruler-combined" style="color:var(--gold);"></i> 35 m²</span>
+                <span class="room-result-feature"><i class="fa-solid fa-bed" style="color:var(--gold);"></i> King Bed</span>
+                <span class="room-result-feature"><i class="fa-solid fa-users" style="color:var(--gold);"></i> Up to 2 guests</span>
+              </div>
+              <div class="amenity-list">
+                <span class="amenity-pill"><i class="fa-solid fa-mug-hot"></i> Breakfast incl.</span>
+                <span class="amenity-pill"><i class="fa-solid fa-rotate-left"></i> Free cancellation</span>
+              </div>
+            </div>
+            <div class="room-result-action">
+              <div class="text-center">
+                <div style="font-family:var(--font-display);font-size:1.8rem;font-weight:300;color:var(--pearl);">₹5,400</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);">per night</div>
+              </div>
+              <button class="btn btn-primary btn-sm" style="width:100%;justify-content:center;margin-top:0.75rem;" onclick="bookRoom('harbour','deluxe')">Select</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Hotel 3 ──────────────────────────────────────── -->
+        <div class="hotel-group-header" onclick="toggleGroup('g3')" style="margin-top:1.5rem;">
+          <div>
+            <div class="hotel-group-name">The Atlas, Goa</div>
+            <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.15rem;">
+              <i class="fa-solid fa-location-dot"></i> Panaji, Goa ·
+              <span style="color:var(--gold);">★★★★½</span> ·
+              <span class="badge badge-rose" style="margin-left:0.4rem;">Only 2 rooms left</span>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-down" id="g3-icon" style="color:var(--gold);transition:transform 0.3s;"></i>
+        </div>
+
+        <div id="g3">
+          <div class="room-result">
+            <div class="room-result-img">
+              <div class="room-result-img-bg" style="background:linear-gradient(135deg,#162840,#1E3355);">
+                <i class="fa-solid fa-umbrella-beach"></i>
+              </div>
+            </div>
+            <div class="room-result-body">
+              <div class="room-result-name">Ocean View Room</div>
+              <div class="room-result-hotel"><i class="fa-solid fa-building"></i> The Atlas, Goa</div>
+              <div class="room-result-features">
+                <span class="room-result-feature"><i class="fa-solid fa-ruler-combined" style="color:var(--gold);"></i> 38 m²</span>
+                <span class="room-result-feature"><i class="fa-solid fa-bed" style="color:var(--gold);"></i> King Bed</span>
+                <span class="room-result-feature"><i class="fa-solid fa-water" style="color:var(--gold);"></i> Ocean view</span>
+              </div>
+              <div class="amenity-list">
+                <span class="amenity-pill"><i class="fa-solid fa-mug-hot"></i> Breakfast incl.</span>
+                <span class="amenity-pill"><i class="fa-solid fa-water-ladder"></i> Pool access</span>
+              </div>
+            </div>
+            <div class="room-result-action">
+              <div class="text-center">
+                <div style="font-family:var(--font-display);font-size:1.8rem;font-weight:300;color:var(--pearl);">₹11,800</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);">per night</div>
+              </div>
+              <button class="btn btn-primary btn-sm" style="width:100%;justify-content:center;margin-top:0.75rem;" onclick="bookRoom('atlas','ocean')">Select</button>
+              <div class="badge badge-rose" style="margin-top:0.5rem;width:100%;justify-content:center;">1 left!</div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /results -->
+    </div><!-- /search-layout -->
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+  <script src="main.js"></script>
+  <script>
+    // Read URL params
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('city')) document.getElementById('qCity').value = params.get('city');
+    if (params.get('checkIn'))  document.getElementById('qIn').value  = params.get('checkIn');
+    if (params.get('checkOut')) document.getElementById('qOut').value = params.get('checkOut');
+    if (params.get('guests'))   document.getElementById('qGuests').value = params.get('guests');
+
+    // Show search meta
+    const city = params.get('city');
+    const checkIn = params.get('checkIn'), checkOut = params.get('checkOut');
+    if (city || checkIn) {
+      const meta = [city, checkIn && checkOut ? `${checkIn} → ${checkOut}` : ''].filter(Boolean).join(' · ');
+      document.getElementById('searchMeta').textContent = meta;
+    }
+
+    // Set default dates
+    if (!document.getElementById('qIn').value) {
+      const t = new Date(); t.setDate(t.getDate()+1);
+      const d = new Date(); d.setDate(d.getDate()+4);
+      document.getElementById('qIn').value  = t.toISOString().split('T')[0];
+      document.getElementById('qOut').value = d.toISOString().split('T')[0];
+    }
+
+    function runSearch() {
+      const city = document.getElementById('qCity').value;
+      const ci = document.getElementById('qIn').value;
+      const co = document.getElementById('qOut').value;
+      const g  = document.getElementById('qGuests').value;
+      showToast('Searching available rooms…', 'info');
+      setTimeout(() => {
+        window.location.href = `search.html?city=${encodeURIComponent(city)}&checkIn=${ci}&checkOut=${co}&guests=${g}`;
+      }, 500);
+    }
+
+    function toggleGroup(id) {
+      const el   = document.getElementById(id);
+      const icon = document.getElementById(id + '-icon');
+      const open = el.style.display !== 'none';
+      el.style.display   = open ? 'none' : '';
+      icon.style.transform = open ? 'rotate(-90deg)' : 'rotate(0)';
+    }
+
+    function setSort(btn, val) {
+      document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      showToast(`Sorted by ${val}`, 'info');
+    }
+
+    function updatePrice(val) {
+      document.getElementById('priceLabel').textContent = `Up to ₹${parseInt(val).toLocaleString()}`;
+    }
+
+    function toggleStar(el) { el.classList.toggle('active'); }
+
+    function applyFilters()  { showToast('Filters applied', 'success'); }
+    function clearFilters()  {
+      document.querySelectorAll('.filter-sidebar input[type=checkbox]').forEach(c => c.checked = false);
+      document.querySelectorAll('.star-pill').forEach(p => p.classList.remove('active'));
+      showToast('Filters cleared', 'info');
+    }
+
+    function bookRoom(hotel, type) {
+      const ci = document.getElementById('qIn').value  || '';
+      const co = document.getElementById('qOut').value || '';
+      const g  = document.getElementById('qGuests').value || 2;
+      window.location.href = `booking.html?hotel=${hotel}&type=${type}&checkIn=${ci}&checkOut=${co}&guests=${g}`;
+    }
+  </script>
+</body>
+</html>

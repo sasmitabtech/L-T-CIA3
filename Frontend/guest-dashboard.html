@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Dashboard — Velour Hotels</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    .welcome-banner {
+      background:
+        radial-gradient(ellipse at 80% 50%, rgba(201,168,76,0.09) 0%, transparent 60%),
+        linear-gradient(135deg, var(--surface-2) 0%, var(--surface-1) 100%);
+      border: 1px solid var(--gold-border);
+      border-radius: var(--radius-xl);
+      padding: 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 2rem;
+      margin-bottom: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .welcome-banner::before {
+      content: '';
+      position: absolute;
+      right: -20px; top: -20px;
+      width: 200px; height: 200px;
+      border-radius: 50%;
+      border: 40px solid rgba(201,168,76,0.04);
+      pointer-events: none;
+    }
+    .welcome-icon {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--gold-dim), var(--gold));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; color: var(--navy-deep); font-weight: 700; flex-shrink: 0;
+    }
+    .upcoming-card {
+      background: var(--surface-2);
+      border: 1px solid var(--gold-border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      transition: transform var(--transition), box-shadow var(--transition);
+    }
+    .upcoming-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+    .upcoming-card-accent {
+      height: 4px;
+      background: linear-gradient(90deg, var(--gold-dim), var(--gold), var(--gold-dim));
+    }
+    .upcoming-card-body { padding: 1.5rem; }
+    .upcoming-nights {
+      font-family: var(--font-display);
+      font-size: 3.5rem; font-weight: 300; color: var(--gold);
+      line-height: 1;
+    }
+    .countdown-label { font-size: 0.72rem; color: var(--text-muted); margin-top: 0.25rem; }
+    .cancel-confirm {
+      background: var(--surface-3);
+      border: 1px solid rgba(229,107,93,0.3);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      margin-top: 1rem;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-layout">
+
+  <!-- ── Sidebar ────────────────────────────────────────── -->
+  <aside class="sidebar" id="sidebar">
+    <a href="index.html" class="sidebar-brand">
+      <div class="sidebar-logo-icon"><i class="fa-solid fa-hotel"></i></div>
+      <span class="sidebar-brand-text">Velour</span>
+    </a>
+
+    <nav class="sidebar-nav">
+      <div class="sidebar-section-label">My Account</div>
+      <a href="guest-dashboard.html" class="sidebar-link active">
+        <span class="sidebar-icon"><i class="fa-solid fa-gauge"></i></span> Dashboard
+      </a>
+      <a href="search.html" class="sidebar-link">
+        <span class="sidebar-icon"><i class="fa-solid fa-magnifying-glass"></i></span> Search Hotels
+      </a>
+
+      <div class="sidebar-section-label">Bookings</div>
+      <a href="#upcoming" class="sidebar-link" onclick="scrollToSection('upcoming')">
+        <span class="sidebar-icon"><i class="fa-solid fa-calendar-check"></i></span> Upcoming
+        <span class="sidebar-badge" id="upcomingCount">2</span>
+      </a>
+      <a href="#history" class="sidebar-link" onclick="scrollToSection('history')">
+        <span class="sidebar-icon"><i class="fa-solid fa-clock-rotate-left"></i></span> History
+      </a>
+
+      <div class="sidebar-section-label">Account</div>
+      <a href="#profile" class="sidebar-link">
+        <span class="sidebar-icon"><i class="fa-regular fa-user"></i></span> Profile
+      </a>
+      <a href="#" class="sidebar-link" onclick="showToast('Preferences saved','info')">
+        <span class="sidebar-icon"><i class="fa-solid fa-sliders"></i></span> Preferences
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-user" onclick="logout()">
+        <div class="user-avatar" id="sidebarUserAvatar">P</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebarUserName">Priya Anand</div>
+          <div class="user-role" id="sidebarUserRole">Guest</div>
+        </div>
+        <i class="fa-solid fa-arrow-right-from-bracket" style="color:var(--text-muted);font-size:0.85rem;"></i>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Main content ──────────────────────────────────────  -->
+  <main class="main-content">
+    <!-- Page Header -->
+    <div class="page-header">
+      <div>
+        <div class="page-title">Dashboard</div>
+        <div class="page-subtitle">Welcome back, <span id="headerUserName">Priya</span></div>
+      </div>
+      <div class="flex gap-sm">
+        <button class="btn btn-ghost btn-sm" id="sidebarToggle"><i class="fa-solid fa-bars"></i></button>
+        <a href="search.html" class="btn btn-primary btn-sm">
+          <i class="fa-solid fa-plus"></i> New Booking
+        </a>
+      </div>
+    </div>
+
+    <div style="padding:2rem;">
+
+      <!-- Welcome Banner -->
+      <div class="welcome-banner">
+        <div class="flex items-center gap">
+          <div class="welcome-icon" id="welcomeAvatar">P</div>
+          <div>
+            <div style="font-family:var(--font-display);font-size:1.5rem;color:var(--pearl);">Good to have you back, <span id="welcomeName">Priya</span></div>
+            <div style="font-size:0.875rem;color:var(--text-muted);margin-top:0.25rem;">You have 2 upcoming stays. Your next check-in is in 4 days.</div>
+          </div>
+        </div>
+        <a href="search.html" class="btn btn-outline" style="flex-shrink:0;">Find a Hotel</a>
+      </div>
+
+      <!-- Stats row -->
+      <div class="grid-4" style="margin-bottom:2rem;">
+        <div class="stat-card">
+          <div class="stat-value">5</div>
+          <div class="stat-label">Total stays</div>
+          <div class="stat-change up mt-sm"><i class="fa-solid fa-arrow-up"></i> 2 this year</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">2</div>
+          <div class="stat-label">Upcoming bookings</div>
+          <div class="stat-change up mt-sm"><i class="fa-solid fa-calendar"></i> Next in 4 days</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">18</div>
+          <div class="stat-label">Nights booked (YTD)</div>
+          <div class="stat-change up mt-sm"><i class="fa-solid fa-moon"></i> +6 vs last year</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">4.8★</div>
+          <div class="stat-label">Your average rating given</div>
+          <div class="stat-change mt-sm" style="color:var(--gold);">Loyal member since 2024</div>
+        </div>
+      </div>
+
+      <!-- Upcoming Bookings -->
+      <section id="upcoming" style="margin-bottom:3rem;">
+        <div class="flex justify-between items-center mb-lg">
+          <h2 class="display-sm" style="font-style:normal;color:var(--pearl);font-size:1.2rem;">Upcoming Stays</h2>
+          <a href="search.html" class="btn btn-outline btn-sm">Book Another</a>
+        </div>
+
+        <div class="grid-2">
+          <!-- Booking 1: Confirmed -->
+          <div class="upcoming-card">
+            <div class="upcoming-card-accent"></div>
+            <div class="upcoming-card-body">
+              <div class="flex justify-between items-center" style="margin-bottom:1rem;">
+                <span class="badge badge-green"><span class="status-dot dot-confirmed"></span> Confirmed</span>
+                <span style="font-size:0.75rem;color:var(--text-muted);">BKG-2025-0041</span>
+              </div>
+              <div style="font-family:var(--font-display);font-size:1.35rem;color:var(--pearl);margin-bottom:0.25rem;">The Meridian Grand</div>
+              <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:1rem;">
+                <i class="fa-solid fa-location-dot"></i> Mumbai, Maharashtra
+              </div>
+              <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:0.75rem;margin-bottom:1rem;">
+                <div>
+                  <div style="font-size:0.65rem;color:var(--text-muted);letter-spacing:0.1em;margin-bottom:0.2rem;">CHECK-IN</div>
+                  <div style="font-weight:500;color:var(--pearl);">15 Sep 2026</div>
+                </div>
+                <div style="text-align:center;">
+                  <div class="upcoming-nights">3</div>
+                  <div class="countdown-label">nights</div>
+                </div>
+                <div>
+                  <div style="font-size:0.65rem;color:var(--text-muted);letter-spacing:0.1em;margin-bottom:0.2rem;">CHECK-OUT</div>
+                  <div style="font-weight:500;color:var(--pearl);">18 Sep 2026</div>
+                </div>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--gold-border);padding-top:1rem;">
+                <div>
+                  <div style="font-size:0.72rem;color:var(--text-muted);">Total amount</div>
+                  <div style="font-family:var(--font-display);font-size:1.4rem;color:var(--gold-bright);">₹24,600</div>
+                </div>
+                <div class="flex gap-sm">
+                  <button class="btn btn-ghost btn-sm" onclick="viewInvoice('BKG-2025-0041')"><i class="fa-solid fa-receipt"></i></button>
+                  <button class="btn btn-danger btn-sm" onclick="promptCancel(this)">Cancel</button>
+                </div>
+              </div>
+              <div class="cancel-confirm" id="cancel-bkg1">
+                <p style="font-size:0.82rem;color:var(--pearl-dim);margin-bottom:0.75rem;">Are you sure? Cancelling within 48 hours may incur a fee.</p>
+                <div class="flex gap-sm">
+                  <button class="btn btn-danger btn-sm" onclick="doCancel('BKG-2025-0041',this)">Yes, cancel</button>
+                  <button class="btn btn-ghost btn-sm" onclick="this.closest('.cancel-confirm').style.display='none'">Keep booking</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Booking 2: Reserved -->
+          <div class="upcoming-card">
+            <div class="upcoming-card-accent" style="background:linear-gradient(90deg,var(--gold-dim),var(--amber),var(--gold-dim));"></div>
+            <div class="upcoming-card-body">
+              <div class="flex justify-between items-center" style="margin-bottom:1rem;">
+                <span class="badge badge-gold"><span class="status-dot dot-reserved"></span> Reserved</span>
+                <span style="font-size:0.75rem;color:var(--text-muted);">BKG-2025-0058</span>
+              </div>
+              <div style="font-family:var(--font-display);font-size:1.35rem;color:var(--pearl);margin-bottom:0.25rem;">The Atlas, Goa</div>
+              <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:1rem;">
+                <i class="fa-solid fa-location-dot"></i> Panaji, Goa
+              </div>
+              <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:0.75rem;margin-bottom:1rem;">
+                <div>
+                  <div style="font-size:0.65rem;color:var(--text-muted);letter-spacing:0.1em;margin-bottom:0.2rem;">CHECK-IN</div>
+                  <div style="font-weight:500;color:var(--pearl);">02 Nov 2026</div>
+                </div>
+                <div style="text-align:center;">
+                  <div class="upcoming-nights">5</div>
+                  <div class="countdown-label">nights</div>
+                </div>
+                <div>
+                  <div style="font-size:0.65rem;color:var(--text-muted);letter-spacing:0.1em;margin-bottom:0.2rem;">CHECK-OUT</div>
+                  <div style="font-weight:500;color:var(--pearl);">07 Nov 2026</div>
+                </div>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--gold-border);padding-top:1rem;">
+                <div>
+                  <div style="font-size:0.72rem;color:var(--text-muted);">Total amount</div>
+                  <div style="font-family:var(--font-display);font-size:1.4rem;color:var(--gold-bright);">₹59,000</div>
+                </div>
+                <div class="flex gap-sm">
+                  <button class="btn btn-ghost btn-sm" onclick="viewInvoice('BKG-2025-0058')"><i class="fa-solid fa-receipt"></i></button>
+                  <button class="btn btn-danger btn-sm" onclick="promptCancel(this)">Cancel</button>
+                </div>
+              </div>
+              <div class="cancel-confirm" id="cancel-bkg2">
+                <p style="font-size:0.82rem;color:var(--pearl-dim);margin-bottom:0.75rem;">Are you sure? This booking is within free cancellation window.</p>
+                <div class="flex gap-sm">
+                  <button class="btn btn-danger btn-sm" onclick="doCancel('BKG-2025-0058',this)">Yes, cancel</button>
+                  <button class="btn btn-ghost btn-sm" onclick="this.closest('.cancel-confirm').style.display='none'">Keep booking</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Booking History -->
+      <section id="history">
+        <div class="flex justify-between items-center mb-lg">
+          <h2 class="display-sm" style="font-style:normal;color:var(--pearl);font-size:1.2rem;">Past Stays</h2>
+          <div class="flex gap-sm">
+            <select class="form-control form-select" style="width:auto;font-size:0.8rem;padding:0.4rem 2rem 0.4rem 0.75rem;" onchange="filterHistory(this.value)">
+              <option value="all">All time</option>
+              <option value="2026">2026</option>
+              <option value="2025">2025</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Booking ID</th>
+                <th>Hotel</th>
+                <th>Room Type</th>
+                <th>Dates</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="historyTable">
+              <tr>
+                <td><strong>BKG-2025-0031</strong></td>
+                <td>Harbour Suites Bengaluru</td>
+                <td>Deluxe King</td>
+                <td>Jul 12–15, 2026</td>
+                <td>₹16,200</td>
+                <td><span class="badge badge-muted"><span class="status-dot dot-completed"></span> Checked-out</span></td>
+                <td><button class="btn btn-ghost btn-sm" onclick="viewInvoice('BKG-2025-0031')"><i class="fa-solid fa-receipt"></i> Invoice</button></td>
+              </tr>
+              <tr>
+                <td><strong>BKG-2025-0018</strong></td>
+                <td>The Meridian Grand</td>
+                <td>Superior Suite</td>
+                <td>May 3–6, 2026</td>
+                <td>₹31,500</td>
+                <td><span class="badge badge-muted"><span class="status-dot dot-completed"></span> Checked-out</span></td>
+                <td><button class="btn btn-ghost btn-sm" onclick="viewInvoice('BKG-2025-0018')"><i class="fa-solid fa-receipt"></i> Invoice</button></td>
+              </tr>
+              <tr>
+                <td><strong>BKG-2025-0009</strong></td>
+                <td>The Atlas, Goa</td>
+                <td>Ocean View Room</td>
+                <td>Jan 20–24, 2026</td>
+                <td>₹47,200</td>
+                <td><span class="badge badge-muted"><span class="status-dot dot-completed"></span> Checked-out</span></td>
+                <td><button class="btn btn-ghost btn-sm" onclick="viewInvoice('BKG-2025-0009')"><i class="fa-solid fa-receipt"></i> Invoice</button></td>
+              </tr>
+              <tr>
+                <td><strong>BKG-2024-0087</strong></td>
+                <td>Harbour Suites Bengaluru</td>
+                <td>Standard Twin</td>
+                <td>Nov 8–10, 2025</td>
+                <td>₹10,800</td>
+                <td><span class="badge badge-rose"><span class="status-dot dot-cancelled"></span> Cancelled</span></td>
+                <td><span style="color:var(--text-muted);font-size:0.78rem;">Refunded</span></td>
+              </tr>
+              <tr>
+                <td><strong>BKG-2024-0062</strong></td>
+                <td>The Meridian Grand</td>
+                <td>Deluxe King</td>
+                <td>Aug 15–18, 2025</td>
+                <td>₹24,600</td>
+                <td><span class="badge badge-muted"><span class="status-dot dot-completed"></span> Checked-out</span></td>
+                <td><button class="btn btn-ghost btn-sm" onclick="viewInvoice('BKG-2024-0062')"><i class="fa-solid fa-receipt"></i> Invoice</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- Invoice Modal -->
+<div class="modal-overlay" id="invoiceModal">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <div>
+        <div class="display-sm" style="font-style:normal;font-size:1.1rem;color:var(--pearl);">Invoice</div>
+        <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.2rem;" id="invoiceId">BKG-2025-0041</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('invoiceModal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <div style="border:1px solid var(--gold-border);border-radius:var(--radius);padding:1.5rem;margin-bottom:1.5rem;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem;font-family:var(--font-display);font-size:1.1rem;color:var(--pearl);">
+        <span>Velour Hotels</span>
+        <span style="color:var(--gold);">INVOICE</span>
+      </div>
+      <div style="font-size:0.75rem;color:var(--text-muted);">Tax Invoice · GST No: 27AABCU9603R1ZX</div>
+    </div>
+
+    <div id="invoiceDetails">
+      <div class="price-row"><span class="price-label">Room Type</span><span class="price-amount" id="invRoom">Deluxe King</span></div>
+      <div class="price-row"><span class="price-label">Check-in</span><span class="price-amount" id="invCheckIn">15 Sep 2026</span></div>
+      <div class="price-row"><span class="price-label">Check-out</span><span class="price-amount" id="invCheckOut">18 Sep 2026</span></div>
+      <div class="price-row"><span class="price-label">Nights</span><span class="price-amount" id="invNights">3</span></div>
+      <div class="price-row"><span class="price-label">Room rate</span><span class="price-amount" id="invRate">₹7,200 × 3</span></div>
+      <div class="price-row"><span class="price-label">Add-ons</span><span class="price-amount">₹0</span></div>
+      <div class="price-row"><span class="price-label">Subtotal</span><span class="price-amount" id="invSubtotal">₹21,600</span></div>
+      <div class="price-row"><span class="price-label">GST (18%)</span><span class="price-amount" id="invTax">₹3,888</span></div>
+      <div class="price-row total">
+        <span class="price-label">Total paid</span>
+        <span class="price-amount" id="invTotal" style="font-family:var(--font-display);font-size:1.5rem;color:var(--gold-bright);">₹25,488</span>
+      </div>
+    </div>
+
+    <div class="flex gap-sm" style="margin-top:1.5rem;">
+      <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="downloadInvoice()">
+        <i class="fa-solid fa-download"></i> Download PDF
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('invoiceModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+<script src="main.js"></script>
+<script>
+  // Populate user info
+  const user = getUser() || { name: 'Priya Anand', role: 'guest' };
+  const first = (user.name || 'Guest').split(' ')[0];
+  ['welcomeName','headerUserName'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.textContent = first;
+  });
+  ['welcomeAvatar','sidebarUserAvatar'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.textContent = (user.name||'G')[0];
+  });
+
+  function scrollToSection(id) {
+    const el = document.getElementById(id); if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+
+  function promptCancel(btn) {
+    const card = btn.closest('.upcoming-card-body');
+    const confirm = card.querySelector('.cancel-confirm');
+    confirm.style.display = confirm.style.display === 'none' || !confirm.style.display ? 'block' : 'none';
+  }
+
+  function doCancel(bookingId, btn) {
+    btn.disabled = true; btn.textContent = 'Cancelling...';
+    setTimeout(() => {
+      showToast(`Booking ${bookingId} cancelled. Refund initiated within 5–7 days.`, 'info');
+      btn.closest('.upcoming-card').style.opacity = '0.5';
+      btn.closest('.upcoming-card').style.pointerEvents = 'none';
+    }, 1200);
+  }
+
+  function viewInvoice(bookingId) {
+    document.getElementById('invoiceId').textContent = bookingId;
+    openModal('invoiceModal');
+  }
+
+  function downloadInvoice() {
+    showToast('PDF download will be available in production', 'info');
+    closeModal('invoiceModal');
+  }
+
+  function filterHistory(year) {
+    showToast(`Showing ${year === 'all' ? 'all' : year} bookings`, 'info');
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Velour Hotels — Find Your Perfect Stay</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" />
+
+  <style>
+    /* ── Hero ──────────────────────────────────────────── */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      background:
+        radial-gradient(ellipse at 80% 40%, rgba(201,168,76,0.06) 0%, transparent 55%),
+        linear-gradient(160deg, #08121F 0%, #0D1D30 60%, #152840 100%);
+    }
+
+    .hero-bg-lines {
+      position: absolute;
+      inset: 0;
+      opacity: 0.04;
+      background-image:
+        linear-gradient(rgba(201,168,76,1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(201,168,76,1) 1px, transparent 1px);
+      background-size: 80px 80px;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 720px;
+    }
+
+    .hero-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.65rem;
+      margin-bottom: 2rem;
+      opacity: 0;
+      animation: heroKickerIn 0.9s 0.2s cubic-bezier(0.22,1,0.36,1) forwards;
+    }
+
+    .kicker-line {
+      width: 32px; height: 1px;
+      background: var(--gold);
+    }
+
+    .hero-headline {
+      opacity: 0;
+      animation: heroTextIn 1s 0.45s cubic-bezier(0.22,1,0.36,1) forwards;
+    }
+
+    .hero-subtext {
+      font-size: 1.05rem;
+      color: var(--pearl-dim);
+      margin-top: 1.25rem;
+      max-width: 52ch;
+      line-height: 1.7;
+      opacity: 0;
+      animation: heroTextIn 1s 0.65s cubic-bezier(0.22,1,0.36,1) forwards;
+    }
+
+    .hero-search {
+      margin-top: 2.75rem;
+      opacity: 0;
+      animation: heroTextIn 1s 0.85s cubic-bezier(0.22,1,0.36,1) forwards;
+    }
+
+    .hero-stats {
+      margin-top: 3rem;
+      display: flex;
+      gap: 3rem;
+      opacity: 0;
+      animation: heroTextIn 1s 1.05s cubic-bezier(0.22,1,0.36,1) forwards;
+    }
+
+    .hero-stat-value {
+      font-family: var(--font-display);
+      font-size: 2.2rem;
+      font-weight: 300;
+      color: var(--pearl);
+    }
+
+    .hero-stat-label { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.15rem; }
+
+    .hero-img-panel {
+      position: absolute;
+      right: 0; top: 0; bottom: 0;
+      width: 42%;
+      overflow: hidden;
+      opacity: 0;
+      animation: heroPanelIn 1.2s 0.3s cubic-bezier(0.22,1,0.36,1) forwards;
+    }
+
+    .hero-img-panel::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to right, var(--navy-deep) 0%, transparent 35%),
+                  linear-gradient(to top, var(--navy-deep) 0%, transparent 30%);
+      z-index: 1;
+    }
+
+    .hero-img-mosaic {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 3px;
+    }
+
+    .mosaic-cell {
+      overflow: hidden;
+    }
+
+    .mosaic-cell .cell-bg {
+      width: 100%;
+      height: 100%;
+      transition: transform 8s ease;
+    }
+
+    .mosaic-cell:hover .cell-bg { transform: scale(1.05); }
+
+    /* Gradient stand-ins for hotel images */
+    .cell-bg-1 { background: linear-gradient(135deg, #1C3454 0%, #0D2A42 50%, #152840 100%); }
+    .cell-bg-2 { background: linear-gradient(225deg, #1A3150 0%, #253D5C 50%, #1C3454 100%); }
+    .cell-bg-3 { background: linear-gradient(45deg,  #0F2033 0%, #1A3150 50%, #0D1D30 100%); }
+    .cell-bg-4 { background: linear-gradient(315deg, #162C45 0%, #1C3454 50%, #0F2237 100%); }
+
+    /* Decorative room icons inside mosaic cells */
+    .cell-icon {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      color: rgba(201,168,76,0.18);
+    }
+
+    @keyframes heroKickerIn {
+      from { opacity: 0; transform: translateX(-20px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes heroTextIn {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes heroPanelIn {
+      from { opacity: 0; transform: translateX(40px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    /* ── Section: Why Us ────────────────────────────────── */
+    .why-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5px;
+      background: var(--gold-border);
+      border: 1px solid var(--gold-border);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+    }
+
+    .why-item {
+      background: var(--surface-1);
+      padding: 2.5rem 2rem;
+      position: relative;
+      transition: background var(--transition);
+    }
+
+    .why-item:hover { background: var(--surface-2); }
+
+    .why-icon {
+      font-size: 1.6rem;
+      color: var(--gold);
+      margin-bottom: 1.25rem;
+    }
+
+    .why-title {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      font-weight: 400;
+      color: var(--pearl);
+      margin-bottom: 0.6rem;
+    }
+
+    .why-body {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.65;
+      max-width: 24ch;
+    }
+
+    /* ── Section: How It Works ──────────────────────────── */
+    .how-timeline {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      position: relative;
+    }
+
+    .how-timeline::before {
+      content: '';
+      position: absolute;
+      top: 24px; left: 16.67%; right: 16.67%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold-border), var(--gold), var(--gold-border), transparent);
+    }
+
+    .how-step { text-align: center; padding: 0 2rem; }
+
+    .how-number {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      background: var(--gold-wash);
+      border: 1px solid var(--gold-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      color: var(--gold);
+      margin: 0 auto 1.5rem;
+      position: relative;
+    }
+
+    .how-number::after {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 1px solid rgba(201,168,76,0.15);
+    }
+
+    .how-title {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      font-weight: 400;
+      color: var(--pearl);
+      margin-bottom: 0.75rem;
+    }
+
+    /* ── Section: Featured Hotels ───────────────────────── */
+    .hotels-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+
+    /* ── Testimonial ────────────────────────────────────── */
+    .testimonial-track {
+      display: flex;
+      gap: 1.5rem;
+      overflow-x: auto;
+      padding-bottom: 1rem;
+      scrollbar-width: none;
+    }
+
+    .testimonial-track::-webkit-scrollbar { display: none; }
+
+    .testimonial-card {
+      background: var(--surface-2);
+      border: 1px solid var(--gold-border);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      min-width: 340px;
+      flex-shrink: 0;
+    }
+
+    .testimonial-stars { color: var(--gold); font-size: 0.85rem; margin-bottom: 1rem; }
+
+    .testimonial-text {
+      font-family: var(--font-display);
+      font-style: italic;
+      font-size: 1.1rem;
+      color: var(--pearl);
+      line-height: 1.65;
+      margin-bottom: 1.5rem;
+    }
+
+    .testimonial-author {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .testimonial-avatar {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--gold-dim), var(--gold));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--navy-deep);
+    }
+
+    .testimonial-name { font-size: 0.875rem; font-weight: 500; color: var(--pearl); }
+    .testimonial-stay { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.1rem; }
+
+    /* ── CTA Section ────────────────────────────────────── */
+    .cta-section {
+      background:
+        radial-gradient(ellipse at 50% 0%, rgba(201,168,76,0.08) 0%, transparent 70%),
+        var(--surface-1);
+      border-top: 1px solid var(--gold-border);
+      border-bottom: 1px solid var(--gold-border);
+      text-align: center;
+      padding: 7rem 0;
+    }
+
+    .cta-deco {
+      width: 1px;
+      height: 60px;
+      background: linear-gradient(to bottom, transparent, var(--gold), transparent);
+      margin: 0 auto 2rem;
+    }
+
+    @media (max-width: 1024px) {
+      .why-grid { grid-template-columns: repeat(2, 1fr); }
+      .how-timeline { grid-template-columns: 1fr; }
+      .how-timeline::before { display: none; }
+      .hotels-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 768px) {
+      .hero-img-panel { display: none; }
+      .hotels-grid { grid-template-columns: 1fr; }
+      .why-grid { grid-template-columns: 1fr; border-radius: var(--radius-lg); }
+      .hero-stats { gap: 2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ════════════════════ NAVBAR ════════════════════════ -->
+  <nav class="navbar" id="navbar">
+    <div class="container">
+      <a href="index.html" class="nav-brand">
+        <span class="brand-mark">Velour</span>
+        <span class="brand-dot"></span>
+      </a>
+
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html" class="active">Home</a></li>
+        <li><a href="search.html">Hotels</a></li>
+        <li><a href="#" onclick="showToast('Experiences coming soon', 'info')">Experiences</a></li>
+        <li><a href="#" onclick="showToast('Offers coming soon', 'info')">Offers</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <a href="login.html" class="btn btn-ghost btn-sm">Sign In</a>
+        <a href="login.html#register" class="btn btn-primary btn-sm">Join Free</a>
+        <button class="nav-hamburger" id="hamburger" aria-label="Menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ════════════════════ HERO ══════════════════════════ -->
+  <section class="hero" id="hero">
+    <canvas id="hero-canvas"></canvas>
+    <div class="hero-bg-lines"></div>
+
+    <div class="container" style="position:relative;z-index:2;">
+      <div class="hero-content">
+        <div class="hero-kicker">
+          <span class="kicker-line"></span>
+          <span class="label-overline">Curated Luxury Hotels</span>
+        </div>
+
+        <h1 class="display-hero hero-headline">
+          Where Every<br/>Stay Becomes<br/><em style="font-style:italic;color:var(--gold);">a Story</em>
+        </h1>
+
+        <p class="hero-subtext">
+          Discover handpicked hotels with seamless booking, instant confirmation,
+          and service crafted around your comfort.
+        </p>
+
+        <!-- Search Bar -->
+        <div class="hero-search">
+          <div class="search-bar" style="max-width:720px;">
+            <div class="search-field">
+              <label><i class="fa-solid fa-location-dot"></i> Destination</label>
+              <input type="text" id="searchCity" placeholder="City or hotel name" />
+            </div>
+            <div class="search-divider"></div>
+            <div class="search-field">
+              <label><i class="fa-regular fa-calendar"></i> Check-in</label>
+              <input type="date" id="checkIn" />
+            </div>
+            <div class="search-divider"></div>
+            <div class="search-field">
+              <label><i class="fa-regular fa-calendar"></i> Check-out</label>
+              <input type="date" id="checkOut" />
+            </div>
+            <div class="search-divider"></div>
+            <div class="search-field">
+              <label><i class="fa-solid fa-user"></i> Guests</label>
+              <input type="number" id="guests" placeholder="2 adults" min="1" max="10" value="2" />
+            </div>
+            <button class="btn btn-primary btn-lg" onclick="doSearch()" style="flex-shrink:0;border-radius:var(--radius-xl);">
+              <i class="fa-solid fa-magnifying-glass"></i> Search
+            </button>
+          </div>
+        </div>
+
+        <div class="hero-stats">
+          <div>
+            <div class="hero-stat-value" data-count="240">0</div>
+            <div class="hero-stat-label">Properties worldwide</div>
+          </div>
+          <div>
+            <div class="hero-stat-value" data-count="18000">0</div>
+            <div class="hero-stat-label">Happy guests</div>
+          </div>
+          <div>
+            <div class="hero-stat-value" data-count="4.9" data-decimal="1">0</div>
+            <div class="hero-stat-label">Average rating</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Decorative right panel -->
+    <div class="hero-img-panel">
+      <div class="hero-img-mosaic">
+        <div class="mosaic-cell" style="position:relative;">
+          <div class="cell-bg cell-bg-1"></div>
+          <div class="cell-icon"><i class="fa-solid fa-building"></i></div>
+        </div>
+        <div class="mosaic-cell" style="position:relative;">
+          <div class="cell-bg cell-bg-2"></div>
+          <div class="cell-icon"><i class="fa-solid fa-bed"></i></div>
+        </div>
+        <div class="mosaic-cell" style="position:relative;">
+          <div class="cell-bg cell-bg-3"></div>
+          <div class="cell-icon"><i class="fa-solid fa-water-ladder"></i></div>
+        </div>
+        <div class="mosaic-cell" style="position:relative;">
+          <div class="cell-bg cell-bg-4"></div>
+          <div class="cell-icon"><i class="fa-solid fa-martini-glass-citrus"></i></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════ WHY US ════════════════════════ -->
+  <section class="section-sm" style="background:var(--navy-mid);border-top:1px solid var(--gold-border);border-bottom:1px solid var(--gold-border);">
+    <div class="container">
+      <div class="why-grid">
+        <div class="why-item" data-aos="fade-up" data-aos-delay="0">
+          <div class="why-icon"><i class="fa-solid fa-shield-halved"></i></div>
+          <div class="why-title">Guaranteed Best Price</div>
+          <p class="why-body">Find a lower rate elsewhere and we match it — no questions asked.</p>
+        </div>
+        <div class="why-item" data-aos="fade-up" data-aos-delay="80">
+          <div class="why-icon"><i class="fa-solid fa-headset"></i></div>
+          <div class="why-title">24/7 Concierge</div>
+          <p class="why-body">Human support available around the clock, wherever you are.</p>
+        </div>
+        <div class="why-item" data-aos="fade-up" data-aos-delay="160">
+          <div class="why-icon"><i class="fa-solid fa-rotate-left"></i></div>
+          <div class="why-title">Free Cancellation</div>
+          <p class="why-body">Plans change. Cancel without penalty up to 48 hours before arrival.</p>
+        </div>
+        <div class="why-item" data-aos="fade-up" data-aos-delay="240">
+          <div class="why-icon"><i class="fa-solid fa-star"></i></div>
+          <div class="why-title">Curated Properties</div>
+          <p class="why-body">Every property vetted for quality — we list only what we'd stay in ourselves.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════ FEATURED HOTELS ═══════════════ -->
+  <section class="section">
+    <div class="container">
+      <div data-aos="fade-up">
+        <span class="label-overline">Featured Properties</span>
+        <h2 class="display-lg mt-sm">Hotels Worth<br/><span style="font-style:italic;color:var(--gold-bright);">Writing Home About</span></h2>
+        <p class="mt" style="margin-bottom:3rem;">Carefully chosen for their design, service, and that hard-to-define feeling of being exactly right.</p>
+      </div>
+
+      <div class="hotels-grid">
+
+        <div class="hotel-card" data-aos="fade-up" data-aos-delay="0">
+          <div class="hotel-card-img">
+            <div class="cell-bg" style="background:linear-gradient(135deg,#0D2A42,#1A4060,#1C3C5A);width:100%;height:100%;display:flex;align-items:center;justify-content:center;">
+              <i class="fa-solid fa-building" style="font-size:4rem;color:rgba(201,168,76,0.2);"></i>
+            </div>
+            <div class="hotel-card-img-overlay"></div>
+            <span class="hotel-card-badge badge badge-gold"><i class="fa-solid fa-crown" style="font-size:0.6rem;"></i> Featured</span>
+          </div>
+          <div class="hotel-card-body">
+            <div class="hotel-card-stars">
+              <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+            </div>
+            <div class="hotel-card-name">The Meridian Grand</div>
+            <div class="hotel-card-location"><i class="fa-solid fa-location-dot"></i> Mumbai, Maharashtra</div>
+            <div class="amenity-list" style="margin-bottom:1rem;">
+              <span class="amenity-pill"><i class="fa-solid fa-wifi"></i> Wi-Fi</span>
+              <span class="amenity-pill"><i class="fa-solid fa-water-ladder"></i> Pool</span>
+              <span class="amenity-pill"><i class="fa-solid fa-spa"></i> Spa</span>
+            </div>
+            <div class="hotel-card-price">
+              <span class="price-value">₹8,200</span>
+              <span class="price-unit">/ night</span>
+            </div>
+          </div>
+          <div class="hotel-card-footer">
+            <span class="badge badge-green"><span class="status-dot dot-confirmed"></span> Available</span>
+            <a href="search.html?hotel=meridian" class="btn btn-outline btn-sm">View Rooms</a>
+          </div>
+        </div>
+
+        <div class="hotel-card" data-aos="fade-up" data-aos-delay="100">
+          <div class="hotel-card-img">
+            <div class="cell-bg" style="background:linear-gradient(225deg,#1C3050,#0F2540,#162C45);width:100%;height:100%;display:flex;align-items:center;justify-content:center;">
+              <i class="fa-solid fa-city" style="font-size:4rem;color:rgba(201,168,76,0.2);"></i>
+            </div>
+            <div class="hotel-card-img-overlay"></div>
+            <span class="hotel-card-badge badge badge-blue"><i class="fa-solid fa-gem" style="font-size:0.6rem;"></i> New</span>
+          </div>
+          <div class="hotel-card-body">
+            <div class="hotel-card-stars">
+              <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-regular fa-star"></i>
+            </div>
+            <div class="hotel-card-name">Harbour Suites Bengaluru</div>
+            <div class="hotel-card-location"><i class="fa-solid fa-location-dot"></i> Bengaluru, Karnataka</div>
+            <div class="amenity-list" style="margin-bottom:1rem;">
+              <span class="amenity-pill"><i class="fa-solid fa-wifi"></i> Wi-Fi</span>
+              <span class="amenity-pill"><i class="fa-solid fa-dumbbell"></i> Gym</span>
+              <span class="amenity-pill"><i class="fa-solid fa-utensils"></i> Restaurant</span>
+            </div>
+            <div class="hotel-card-price">
+              <span class="price-value">₹5,400</span>
+              <span class="price-unit">/ night</span>
+            </div>
+          </div>
+          <div class="hotel-card-footer">
+            <span class="badge badge-green"><span class="status-dot dot-confirmed"></span> Available</span>
+            <a href="search.html?hotel=harbour" class="btn btn-outline btn-sm">View Rooms</a>
+          </div>
+        </div>
+
+        <div class="hotel-card" data-aos="fade-up" data-aos-delay="200">
+          <div class="hotel-card-img">
+            <div class="cell-bg" style="background:linear-gradient(315deg,#162840,#1E3558,#1A3050);width:100%;height:100%;display:flex;align-items:center;justify-content:center;">
+              <i class="fa-solid fa-mountain-sun" style="font-size:4rem;color:rgba(201,168,76,0.2);"></i>
+            </div>
+            <div class="hotel-card-img-overlay"></div>
+            <span class="hotel-card-badge badge badge-gold"><i class="fa-solid fa-fire-flame-curved" style="font-size:0.6rem;"></i> Popular</span>
+          </div>
+          <div class="hotel-card-body">
+            <div class="hotel-card-stars">
+              <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star-half-stroke"></i>
+            </div>
+            <div class="hotel-card-name">The Atlas, Goa</div>
+            <div class="hotel-card-location"><i class="fa-solid fa-location-dot"></i> Panaji, Goa</div>
+            <div class="amenity-list" style="margin-bottom:1rem;">
+              <span class="amenity-pill"><i class="fa-solid fa-water-ladder"></i> Pool</span>
+              <span class="amenity-pill"><i class="fa-solid fa-umbrella-beach"></i> Beachfront</span>
+              <span class="amenity-pill"><i class="fa-solid fa-car"></i> Parking</span>
+            </div>
+            <div class="hotel-card-price">
+              <span class="price-value">₹11,800</span>
+              <span class="price-unit">/ night</span>
+            </div>
+          </div>
+          <div class="hotel-card-footer">
+            <span class="badge badge-rose"><span class="status-dot dot-cancelled"></span> Few rooms left</span>
+            <a href="search.html?hotel=atlas" class="btn btn-primary btn-sm">Book Now</a>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="text-center" style="margin-top:2.5rem;" data-aos="fade-up">
+        <a href="search.html" class="btn btn-outline">
+          Browse All Hotels <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════ HOW IT WORKS ══════════════════ -->
+  <section class="section" style="background:var(--navy-mid);border-top:1px solid var(--gold-border);">
+    <div class="container">
+      <div class="text-center mb-xl" data-aos="fade-up">
+        <span class="label-overline">Process</span>
+        <h2 class="display-lg mt-sm">Booking in Three<br/><span style="font-style:italic;color:var(--gold-bright);">Simple Steps</span></h2>
+      </div>
+
+      <div class="how-timeline">
+        <div class="how-step" data-aos="fade-up" data-aos-delay="0">
+          <div class="how-number">1</div>
+          <div class="how-title">Search & Discover</div>
+          <p style="font-size:0.875rem;color:var(--text-muted);line-height:1.7;max-width:28ch;margin:0 auto;">Enter your destination, dates, and number of guests to see curated availability.</p>
+        </div>
+        <div class="how-step" data-aos="fade-up" data-aos-delay="120">
+          <div class="how-number">2</div>
+          <div class="how-title">Choose Your Room</div>
+          <p style="font-size:0.875rem;color:var(--text-muted);line-height:1.7;max-width:28ch;margin:0 auto;">Compare room types, amenities, and pricing — with real-time availability shown.</p>
+        </div>
+        <div class="how-step" data-aos="fade-up" data-aos-delay="240">
+          <div class="how-number">3</div>
+          <div class="how-title">Confirm &amp; Enjoy</div>
+          <p style="font-size:0.875rem;color:var(--text-muted);line-height:1.7;max-width:28ch;margin:0 auto;">Review your booking details, confirm, and arrive ready to relax.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════ TESTIMONIALS ══════════════════ -->
+  <section class="section">
+    <div class="container">
+      <div class="flex justify-between items-center mb-xl" data-aos="fade-up">
+        <div>
+          <span class="label-overline">Guest Stories</span>
+          <h2 class="display-lg mt-sm">Words From<br/><span style="font-style:italic;color:var(--gold-bright);">Our Guests</span></h2>
+        </div>
+        <div class="flex gap-sm">
+          <button class="btn btn-ghost btn-sm" id="scrollLeft"><i class="fa-solid fa-chevron-left"></i></button>
+          <button class="btn btn-ghost btn-sm" id="scrollRight"><i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+      </div>
+
+      <div class="testimonial-track" id="testimonialTrack">
+        <div class="testimonial-card">
+          <div class="testimonial-stars">★★★★★</div>
+          <div class="testimonial-text">"The check-in was seamless, the room was exactly as described, and the staff remembered my name every single time. That's a rarity."</div>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">PA</div>
+            <div>
+              <div class="testimonial-name">Priya Anand</div>
+              <div class="testimonial-stay">Stayed at The Meridian Grand · Mumbai</div>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars">★★★★★</div>
+          <div class="testimonial-text">"Booked for a business trip, stayed three extra nights because I didn't want to leave. The rooftop pool at sunset was something else entirely."</div>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">RK</div>
+            <div>
+              <div class="testimonial-name">Rohit Krishnamurthy</div>
+              <div class="testimonial-stay">Stayed at Harbour Suites · Bengaluru</div>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars">★★★★☆</div>
+          <div class="testimonial-text">"Cancellation was painless — I needed to change my dates two days out and it was handled in minutes. That's the kind of trust that earns a repeat booking."</div>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">SM</div>
+            <div>
+              <div class="testimonial-name">Shreya Mehta</div>
+              <div class="testimonial-stay">Stayed at The Atlas · Goa</div>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars">★★★★★</div>
+          <div class="testimonial-text">"The room type filter on the app made it so easy to find exactly what I needed — a quiet floor, king bed, city view. Done in two minutes."</div>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">AJ</div>
+            <div>
+              <div class="testimonial-name">Arjun Joshi</div>
+              <div class="testimonial-stay">Stayed at The Meridian Grand · Mumbai</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════ CTA ════════════════════════════ -->
+  <section class="cta-section">
+    <div class="container" data-aos="fade-up">
+      <div class="cta-deco"></div>
+      <span class="label-overline">Start Your Journey</span>
+      <h2 class="display-lg mt-sm" style="margin-bottom:1rem;">Your next stay is<br/>closer than you think</h2>
+      <p style="margin:0 auto 2.5rem;max-width:50ch;text-align:center;">Join thousands of guests who trust Velour for straightforward bookings and properties worth remembering.</p>
+      <div class="flex justify-center gap-sm" style="flex-wrap:wrap;">
+        <a href="login.html#register" class="btn btn-primary btn-lg">Create a Free Account</a>
+        <a href="search.html" class="btn btn-outline btn-lg">Browse Hotels</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════ FOOTER ════════════════════════ -->
+  <footer class="footer">
+    <div class="container">
+      <div class="grid-4">
+        <div>
+          <div class="footer-brand">Velour</div>
+          <div class="footer-tagline">Where every stay becomes a story.</div>
+          <div class="flex gap-sm">
+            <a href="#" class="btn btn-ghost btn-sm"><i class="fa-brands fa-instagram"></i></a>
+            <a href="#" class="btn btn-ghost btn-sm"><i class="fa-brands fa-x-twitter"></i></a>
+            <a href="#" class="btn btn-ghost btn-sm"><i class="fa-brands fa-linkedin-in"></i></a>
+          </div>
+        </div>
+        <div>
+          <div class="footer-heading">Explore</div>
+          <ul class="footer-links">
+            <li><a href="search.html">All Hotels</a></li>
+            <li><a href="#">Experiences</a></li>
+            <li><a href="#">Loyalty Programme</a></li>
+            <li><a href="#">Gift Cards</a></li>
+          </ul>
+        </div>
+        <div>
+          <div class="footer-heading">Support</div>
+          <ul class="footer-links">
+            <li><a href="#">Help Centre</a></li>
+            <li><a href="#">Cancellation Policy</a></li>
+            <li><a href="#">Contact Us</a></li>
+            <li><a href="#">Accessibility</a></li>
+          </ul>
+        </div>
+        <div>
+          <div class="footer-heading">Company</div>
+          <ul class="footer-links">
+            <li><a href="#">About Velour</a></li>
+            <li><a href="#">Partner with Us</a></li>
+            <li><a href="#">Careers</a></li>
+            <li><a href="#">Press</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 Velour Hotels. All rights reserved.</span>
+        <div class="flex gap" style="flex-wrap:wrap;justify-content:center;">
+          <a href="#" style="color:var(--text-muted);text-decoration:none;">Privacy Policy</a>
+          <a href="#" style="color:var(--text-muted);text-decoration:none;">Terms of Service</a>
+          <a href="#" style="color:var(--text-muted);text-decoration:none;">Cookie Settings</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+  <script src="main.js"></script>
+  <script>
+    // ── Hero particle canvas ─────────────────────────────
+    const canvas = document.getElementById('hero-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    for (let i = 0; i < 55; i++) {
+      particles.push({
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
+        r: Math.random() * 1.5 + 0.3,
+        dx: (Math.random() - 0.5) * 0.18,
+        dy: (Math.random() - 0.5) * 0.18,
+        alpha: Math.random() * 0.5 + 0.1,
+      });
+    }
+
+    function drawParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(201,168,76,${p.alpha})`;
+        ctx.fill();
+        p.x += p.dx; p.y += p.dy;
+        if (p.x < 0 || p.x > canvas.width) p.dx *= -1;
+        if (p.y < 0 || p.y > canvas.height) p.dy *= -1;
+      });
+      requestAnimationFrame(drawParticles);
+    }
+    drawParticles();
+
+    // ── Counter animation ────────────────────────────────
+    function animateCounter(el) {
+      const target = parseFloat(el.dataset.count);
+      const decimal = parseInt(el.dataset.decimal || '0');
+      const duration = 1800;
+      const start = performance.now();
+      function update(now) {
+        const t = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - t, 3);
+        const current = eased * target;
+        el.textContent = decimal > 0 ? current.toFixed(decimal) : Math.round(current).toLocaleString();
+        if (t < 1) requestAnimationFrame(update);
+      }
+      requestAnimationFrame(update);
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.querySelectorAll('[data-count]').forEach(animateCounter);
+          observer.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.4 });
+
+    document.querySelectorAll('.hero-stats').forEach(el => observer.observe(el));
+
+    // ── Testimonial scroll ───────────────────────────────
+    const track = document.getElementById('testimonialTrack');
+    document.getElementById('scrollLeft').onclick  = () => track.scrollBy({left:-360,behavior:'smooth'});
+    document.getElementById('scrollRight').onclick = () => track.scrollBy({left:360,behavior:'smooth'});
+
+    // ── Search redirect ──────────────────────────────────
+    function doSearch() {
+      const city   = document.getElementById('searchCity').value;
+      const checkIn  = document.getElementById('checkIn').value;
+      const checkOut = document.getElementById('checkOut').value;
+      const guests   = document.getElementById('guests').value;
+      window.location.href = `search.html?city=${encodeURIComponent(city)}&checkIn=${checkIn}&checkOut=${checkOut}&guests=${guests}`;
+    }
+
+    // Set default dates
+    const today = new Date();
+    const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
+    const dayAfter = new Date(today); dayAfter.setDate(dayAfter.getDate() + 3);
+    document.getElementById('checkIn').value  = tomorrow.toISOString().split('T')[0];
+    document.getElementById('checkOut').value = dayAfter.toISOString().split('T')[0];
+  </script>
+</body>
+</html>

@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Book Your Stay — Velour Hotels</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    body { background: var(--navy-deep); }
+
+    .booking-header {
+      background: var(--navy-mid);
+      border-bottom: 1px solid var(--gold-border);
+      padding: 1rem 0;
+      position: sticky; top: 0; z-index: 100;
+    }
+
+    .booking-layout {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 2rem;
+      padding: 2.5rem 0 4rem;
+    }
+
+    /* Room summary sidebar */
+    .booking-summary {
+      position: sticky;
+      top: 90px;
+      height: fit-content;
+    }
+
+    .summary-card {
+      background: var(--surface-2);
+      border: 1px solid var(--gold-border);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+    }
+
+    .summary-room-img {
+      height: 140px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 4rem; color: rgba(201,168,76,0.2);
+    }
+
+    .summary-body { padding: 1.5rem; }
+
+    .policy-item {
+      display: flex; align-items: flex-start; gap: 0.75rem;
+      font-size: 0.82rem; color: var(--pearl-dim);
+      margin-bottom: 0.75rem;
+    }
+    .policy-icon { color: var(--gold); margin-top: 0.1rem; flex-shrink: 0; }
+
+    /* Step panels */
+    .step-panel { display: none; }
+    .step-panel.active { display: block; }
+
+    .step-panel-title {
+      font-family: var(--font-display);
+      font-size: 1.6rem; font-weight: 300;
+      color: var(--pearl);
+      margin-bottom: 0.35rem;
+    }
+
+    .step-panel-sub { font-size: 0.875rem; color: var(--text-muted); margin-bottom: 2rem; }
+
+    /* Section blocks */
+    .form-section {
+      background: var(--surface-1);
+      border: 1px solid var(--gold-border);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .form-section-title {
+      font-family: var(--font-display);
+      font-size: 1rem; color: var(--pearl);
+      margin-bottom: 1.25rem;
+      display: flex; align-items: center; gap: 0.6rem;
+    }
+
+    .form-section-title i { color: var(--gold); font-size: 0.9rem; }
+
+    /* Add-on cards */
+    .addon-card {
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--surface-2);
+      border: 1px solid var(--gold-border);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      margin-bottom: 0.75rem;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .addon-card:hover { border-color: var(--gold); background: var(--gold-wash); }
+    .addon-card.selected { border-color: var(--gold); background: var(--gold-wash); }
+    .addon-card.selected .addon-check { background: var(--gold); border-color: var(--gold); color: var(--navy-deep); }
+
+    .addon-check {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      border: 1.5px solid var(--gold-border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem; color: transparent;
+      transition: all var(--transition);
+    }
+
+    /* Payment fake card input */
+    .card-input-group {
+      background: var(--surface-2);
+      border: 1px solid var(--gold-border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .card-input-row {
+      display: flex; align-items: center;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--gold-border);
+    }
+
+    .card-input-row:last-child { border-bottom: none; }
+
+    .card-input-label {
+      font-size: 0.72rem; color: var(--text-muted); letter-spacing: 0.06em;
+      width: 110px; flex-shrink: 0;
+    }
+
+    .card-input-val {
+      flex: 1; background: none; border: none; outline: none;
+      font-family: var(--font-ui); font-size: 0.9rem; color: var(--pearl);
+    }
+
+    .card-input-val::placeholder { color: var(--text-muted); }
+
+    /* Confirmation page */
+    .confirm-icon {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      background: rgba(91,168,122,0.12);
+      border: 1px solid rgba(91,168,122,0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; color: var(--sage-light);
+      margin: 0 auto 1.5rem;
+    }
+
+    .booking-ref {
+      font-family: 'Courier New', monospace;
+      font-size: 1.4rem;
+      color: var(--gold-bright);
+      letter-spacing: 0.1em;
+      background: var(--gold-wash);
+      border: 1px solid var(--gold-border);
+      border-radius: var(--radius);
+      padding: 0.75rem 1.5rem;
+      text-align: center;
+      margin: 1rem 0;
+    }
+
+    @media (max-width: 900px) {
+      .booking-layout { grid-template-columns: 1fr; }
+      .booking-summary { position: static; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Booking Header -->
+<div class="booking-header">
+  <div class="container">
+    <div class="flex items-center justify-between">
+      <a href="index.html" style="font-family:var(--font-display);font-size:1.4rem;color:var(--pearl);text-decoration:none;">Velour</a>
+      <a href="search.html" class="btn btn-ghost btn-sm"><i class="fa-solid fa-arrow-left"></i> Back to results</a>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <!-- Progress Steps -->
+  <div style="padding:2rem 0 0;">
+    <div class="steps" id="stepsBar">
+      <div class="step active" id="stepEl-1">
+        <div class="step-content">
+          <div class="step-circle">1</div>
+          <div class="step-label">Room</div>
+        </div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step pending" id="stepEl-2">
+        <div class="step-content">
+          <div class="step-circle">2</div>
+          <div class="step-label">Your Details</div>
+        </div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step pending" id="stepEl-3">
+        <div class="step-content">
+          <div class="step-circle">3</div>
+          <div class="step-label">Payment</div>
+        </div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step pending" id="stepEl-4">
+        <div class="step-content">
+          <div class="step-circle"><i class="fa-solid fa-check" style="font-size:0.7rem;"></i></div>
+          <div class="step-label">Confirmed</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main layout -->
+  <div class="booking-layout">
+
+    <!-- ── Left: Step panels ─────────────────────────────── -->
+    <div>
+
+      <!-- STEP 1: Room review -->
+      <div class="step-panel active" id="step-1">
+        <div class="step-panel-title">Review your room</div>
+        <div class="step-panel-sub">Confirm the room and dates before proceeding.</div>
+
+        <div class="form-section">
+          <div class="form-section-title"><i class="fa-solid fa-hotel"></i> Room Details</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;">
+            <div>
+              <div class="form-label">Hotel</div>
+              <div style="color:var(--pearl);font-weight:500;" id="s1Hotel">The Meridian Grand</div>
+            </div>
+            <div>
+              <div class="form-label">Room type</div>
+              <div style="color:var(--pearl);font-weight:500;" id="s1Room">Deluxe King</div>
+            </div>
+            <div>
+              <div class="form-label">Check-in</div>
+              <div style="color:var(--pearl);font-weight:500;" id="s1CheckIn">—</div>
+            </div>
+            <div>
+              <div class="form-label">Check-out</div>
+              <div style="color:var(--pearl);font-weight:500;" id="s1CheckOut">—</div>
+            </div>
+            <div>
+              <div class="form-label">Duration</div>
+              <div style="color:var(--pearl);font-weight:500;" id="s1Nights">—</div>
+            </div>
+            <div>
+              <div class="form-label">Guests</div>
+              <div style="color:var(--pearl);font-weight:500;" id="s1Guests">2</div>
+            </div>
+          </div>
+
+          <div style="border-top:1px solid var(--gold-border);margin-top:1.25rem;padding-top:1.25rem;">
+            <div class="form-label">Included amenities</div>
+            <div class="amenity-list" style="margin-top:0.5rem;">
+              <span class="amenity-pill"><i class="fa-solid fa-wifi"></i> Wi-Fi</span>
+              <span class="amenity-pill"><i class="fa-solid fa-mug-hot"></i> Breakfast</span>
+              <span class="amenity-pill"><i class="fa-solid fa-spa"></i> Spa access</span>
+              <span class="amenity-pill"><i class="fa-solid fa-snowflake"></i> A/C</span>
+              <span class="amenity-pill"><i class="fa-solid fa-rotate-left"></i> Free cancellation</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add-ons -->
+        <div class="form-section">
+          <div class="form-section-title"><i class="fa-solid fa-plus-circle"></i> Add-ons (optional)</div>
+
+          <div class="addon-card" onclick="toggleAddon(this,'airport',800)">
+            <div class="flex items-center gap">
+              <i class="fa-solid fa-plane-arrival" style="color:var(--gold);width:20px;"></i>
+              <div>
+                <div style="font-size:0.875rem;color:var(--pearl);font-weight:500;">Airport transfer (one way)</div>
+                <div style="font-size:0.75rem;color:var(--text-muted);">Private cab · Arrival pickup</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-sm">
+              <span style="color:var(--gold-bright);font-family:var(--font-display);font-size:1rem;">₹800</span>
+              <div class="addon-check"><i class="fa-solid fa-check"></i></div>
+            </div>
+          </div>
+
+          <div class="addon-card" onclick="toggleAddon(this,'breakfast',650)">
+            <div class="flex items-center gap">
+              <i class="fa-solid fa-utensils" style="color:var(--gold);width:20px;"></i>
+              <div>
+                <div style="font-size:0.875rem;color:var(--pearl);font-weight:500;">Extra breakfast (per day)</div>
+                <div style="font-size:0.75rem;color:var(--text-muted);">Continental buffet · 7–11 AM</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-sm">
+              <span style="color:var(--gold-bright);font-family:var(--font-display);font-size:1rem;">₹650</span>
+              <div class="addon-check"><i class="fa-solid fa-check"></i></div>
+            </div>
+          </div>
+
+          <div class="addon-card" onclick="toggleAddon(this,'late',1200)">
+            <div class="flex items-center gap">
+              <i class="fa-solid fa-clock" style="color:var(--gold);width:20px;"></i>
+              <div>
+                <div style="font-size:0.875rem;color:var(--pearl);font-weight:500;">Late check-out (2 PM)</div>
+                <div style="font-size:0.75rem;color:var(--text-muted);">Extend your morning · Subject to availability</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-sm">
+              <span style="color:var(--gold-bright);font-family:var(--font-display);font-size:1rem;">₹1,200</span>
+              <div class="addon-check"><i class="fa-solid fa-check"></i></div>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-lg" style="width:100%;justify-content:center;" onclick="goStep(2)">
+          Continue to Guest Details <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </div>
+
+      <!-- STEP 2: Guest details -->
+      <div class="step-panel" id="step-2">
+        <div class="step-panel-title">Your details</div>
+        <div class="step-panel-sub">We need a few details to complete your reservation.</div>
+
+        <div class="form-section">
+          <div class="form-section-title"><i class="fa-solid fa-user"></i> Primary Guest</div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label">First name *</label>
+              <input type="text" class="form-control" id="gFirstName" placeholder="First name" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Last name *</label>
+              <input type="text" class="form-control" id="gLastName" placeholder="Last name" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email address *</label>
+            <div class="input-icon-wrap">
+              <i class="fa-regular fa-envelope icon"></i>
+              <input type="email" class="form-control" id="gEmail" placeholder="Booking confirmation will be sent here" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone number *</label>
+            <div class="input-icon-wrap">
+              <i class="fa-solid fa-phone icon"></i>
+              <input type="tel" class="form-control" id="gPhone" placeholder="+91 00000 00000" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Special requests</label>
+            <textarea class="form-control" rows="3" placeholder="Dietary requirements, accessibility needs, room preferences…" style="resize:vertical;"></textarea>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title"><i class="fa-solid fa-id-card"></i> ID Verification</div>
+          <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:1rem;">Required for hotel check-in as per government regulations.</p>
+          <div class="form-group">
+            <label class="form-label">ID type</label>
+            <select class="form-control form-select">
+              <option>Aadhaar Card</option>
+              <option>Passport</option>
+              <option>PAN Card</option>
+              <option>Driving Licence</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">ID number</label>
+            <input type="text" class="form-control" placeholder="Enter your ID number" />
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title"><i class="fa-solid fa-shield-halved"></i> Cancellation Policy</div>
+          <div class="policy-item">
+            <i class="fa-solid fa-circle-check policy-icon"></i>
+            <span>Free cancellation until 48 hours before check-in. Full refund issued within 5–7 business days.</span>
+          </div>
+          <div class="policy-item">
+            <i class="fa-solid fa-circle-exclamation policy-icon"></i>
+            <span>Cancellation within 48 hours: 50% of first night charged as a cancellation fee.</span>
+          </div>
+          <div class="policy-item">
+            <i class="fa-solid fa-circle-xmark policy-icon" style="color:#E56B5D;"></i>
+            <span>No-show: Full first-night charge applied. No refund.</span>
+          </div>
+          <label class="check-item" style="margin-top:1rem;">
+            <input type="checkbox" id="policyCheck" />
+            I have read and agree to the cancellation policy
+          </label>
+        </div>
+
+        <div class="flex gap-sm">
+          <button class="btn btn-ghost" onclick="goStep(1)"><i class="fa-solid fa-arrow-left"></i> Back</button>
+          <button class="btn btn-primary btn-lg" style="flex:1;justify-content:center;" onclick="validateStep2()">
+            Continue to Payment <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 3: Payment -->
+      <div class="step-panel" id="step-3">
+        <div class="step-panel-title">Secure payment</div>
+        <div class="step-panel-sub">Your payment is encrypted and secure. We do not store card details.</div>
+
+        <div class="form-section">
+          <div class="form-section-title"><i class="fa-solid fa-credit-card"></i> Payment Method</div>
+
+          <!-- Method tabs -->
+          <div class="tabs" style="margin-bottom:1.5rem;">
+            <button class="tab-btn active" onclick="setPayMethod(this,'card')">
+              <i class="fa-solid fa-credit-card"></i> Card
+            </button>
+            <button class="tab-btn" onclick="setPayMethod(this,'upi')">
+              <i class="fa-solid fa-mobile-screen-button"></i> UPI
+            </button>
+            <button class="tab-btn" onclick="setPayMethod(this,'netbanking')">
+              <i class="fa-solid fa-building-columns"></i> Net Banking
+            </button>
+          </div>
+
+          <!-- Card inputs -->
+          <div id="payCard">
+            <div class="form-group">
+              <label class="form-label">Name on card</label>
+              <input type="text" class="form-control" id="cardName" placeholder="As printed on card" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Card number</label>
+              <div class="card-input-group">
+                <div class="card-input-row">
+                  <span class="card-input-label">Card number</span>
+                  <input class="card-input-val" type="text" placeholder="•••• •••• •••• ••••" maxlength="19" oninput="formatCard(this)" />
+                  <i class="fa-brands fa-cc-visa" style="color:var(--gold);font-size:1.2rem;margin-left:0.5rem;"></i>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;">
+                  <div class="card-input-row" style="border-right:1px solid var(--gold-border);">
+                    <span class="card-input-label">Expiry</span>
+                    <input class="card-input-val" type="text" placeholder="MM / YY" maxlength="7" oninput="formatExpiry(this)" />
+                  </div>
+                  <div class="card-input-row">
+                    <span class="card-input-label">CVV</span>
+                    <input class="card-input-val" type="password" placeholder="•••" maxlength="4" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- UPI -->
+          <div id="payUPI" style="display:none;">
+            <div class="form-group">
+              <label class="form-label">UPI ID</label>
+              <div class="input-icon-wrap">
+                <i class="fa-solid fa-at icon"></i>
+                <input type="text" class="form-control" placeholder="yourname@upi" />
+              </div>
+            </div>
+            <p style="font-size:0.78rem;color:var(--text-muted);">You'll receive a payment request on your UPI app to authorize the transaction.</p>
+          </div>
+
+          <!-- Net banking -->
+          <div id="payNetBanking" style="display:none;">
+            <div class="form-group">
+              <label class="form-label">Select your bank</label>
+              <select class="form-control form-select">
+                <option>State Bank of India</option>
+                <option>HDFC Bank</option>
+                <option>ICICI Bank</option>
+                <option>Axis Bank</option>
+                <option>Kotak Mahindra Bank</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.5rem;font-size:0.75rem;color:var(--text-muted);">
+            <i class="fa-solid fa-lock" style="color:var(--sage-light);"></i>
+            256-bit SSL encryption · PCI DSS compliant · Payments processed securely
+          </div>
+        </div>
+
+        <!-- Total summary -->
+        <div class="price-breakdown" style="margin-bottom:1.5rem;">
+          <div class="price-row"><span class="price-label">Room</span><span class="price-amount" id="pay-room">₹0</span></div>
+          <div class="price-row"><span class="price-label">Add-ons</span><span class="price-amount" id="pay-addons">₹0</span></div>
+          <div class="price-row"><span class="price-label">Taxes (18% GST)</span><span class="price-amount" id="pay-tax">₹0</span></div>
+          <div class="price-row total">
+            <span class="price-label">Total (INR)</span>
+            <span class="price-amount" id="pay-total" style="font-family:var(--font-display);font-size:1.6rem;color:var(--gold-bright);">₹0</span>
+          </div>
+        </div>
+
+        <div class="flex gap-sm">
+          <button class="btn btn-ghost" onclick="goStep(2)"><i class="fa-solid fa-arrow-left"></i> Back</button>
+          <button class="btn btn-primary btn-lg" style="flex:1;justify-content:center;" id="payBtn" onclick="processPayment()">
+            <span id="payBtnText"><i class="fa-solid fa-lock"></i> Pay & Confirm</span>
+            <span id="payLoader" style="display:none;" class="loader"></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 4: Confirmation -->
+      <div class="step-panel" id="step-4" style="text-align:center;padding:2rem 0;">
+        <div class="confirm-icon"><i class="fa-solid fa-check"></i></div>
+        <div style="font-family:var(--font-display);font-size:2rem;font-weight:300;color:var(--pearl);margin-bottom:0.5rem;">Booking Confirmed</div>
+        <p style="color:var(--text-muted);margin:0 auto 1.5rem;max-width:50ch;">
+          Your reservation is secured. A confirmation email has been sent to <strong id="confEmail" style="color:var(--pearl);">your email</strong>.
+        </p>
+
+        <div class="booking-ref" id="bookingRef">BKG-2026-XXXX</div>
+
+        <div class="form-section" style="text-align:left;margin-top:1.5rem;">
+          <div class="form-section-title"><i class="fa-solid fa-calendar-check"></i> Stay Summary</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <div><div class="form-label">Hotel</div><div style="color:var(--pearl);" id="conf-hotel">—</div></div>
+            <div><div class="form-label">Room</div><div style="color:var(--pearl);" id="conf-room">—</div></div>
+            <div><div class="form-label">Check-in</div><div style="color:var(--pearl);" id="conf-ci">—</div></div>
+            <div><div class="form-label">Check-out</div><div style="color:var(--pearl);" id="conf-co">—</div></div>
+            <div><div class="form-label">Guests</div><div style="color:var(--pearl);" id="conf-guests">—</div></div>
+            <div><div class="form-label">Total paid</div><div style="color:var(--gold-bright);font-family:var(--font-display);font-size:1.2rem;" id="conf-total">—</div></div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:1.5rem;">
+          <a href="guest-dashboard.html" class="btn btn-primary btn-lg"><i class="fa-solid fa-gauge"></i> Go to Dashboard</a>
+          <button class="btn btn-outline btn-lg" onclick="showToast('Invoice download coming soon','info')">
+            <i class="fa-solid fa-download"></i> Download Invoice
+          </button>
+          <a href="search.html" class="btn btn-ghost btn-lg">Book Another Stay</a>
+        </div>
+      </div>
+
+    </div><!-- /left -->
+
+    <!-- ── Right: Summary sidebar ────────────────────────── -->
+    <div class="booking-summary">
+      <div class="summary-card">
+        <div class="summary-room-img" id="sumImg" style="background:linear-gradient(135deg,#0D2A42,#1A4060);">
+          <i class="fa-solid fa-crown"></i>
+        </div>
+        <div class="summary-body">
+          <div style="font-family:var(--font-display);font-size:1.2rem;color:var(--pearl);margin-bottom:0.15rem;" id="sumHotel">The Meridian Grand</div>
+          <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:1rem;" id="sumRoomName">Deluxe King · Mumbai</div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1.25rem;">
+            <div style="background:var(--surface-3);border-radius:var(--radius);padding:0.75rem;">
+              <div class="form-label" style="margin-bottom:0.2rem;">Check-in</div>
+              <div style="font-size:0.875rem;color:var(--pearl);" id="sumCI">—</div>
+            </div>
+            <div style="background:var(--surface-3);border-radius:var(--radius);padding:0.75rem;">
+              <div class="form-label" style="margin-bottom:0.2rem;">Check-out</div>
+              <div style="font-size:0.875rem;color:var(--pearl);" id="sumCO">—</div>
+            </div>
+          </div>
+
+          <!-- Price breakdown -->
+          <div class="price-row"><span class="price-label">Room × <span id="sumNights">0</span> nights</span><span class="price-amount" id="sumRoomCost">₹0</span></div>
+          <div class="price-row" id="addonRow" style="display:none;"><span class="price-label">Add-ons</span><span class="price-amount" id="sumAddonCost">₹0</span></div>
+          <div class="price-row"><span class="price-label">GST (18%)</span><span class="price-amount" id="sumTax">₹0</span></div>
+          <div class="price-row total">
+            <span class="price-label">Total</span>
+            <span class="price-amount" id="sumTotal" style="font-family:var(--font-display);font-size:1.4rem;color:var(--gold-bright);">₹0</span>
+          </div>
+
+          <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--gold-border);">
+            <div class="policy-item" style="margin-bottom:0.5rem;">
+              <i class="fa-solid fa-rotate-left policy-icon" style="font-size:0.85rem;"></i>
+              <span style="font-size:0.78rem;">Free cancellation before check-in</span>
+            </div>
+            <div class="policy-item">
+              <i class="fa-solid fa-lock policy-icon" style="font-size:0.85rem;"></i>
+              <span style="font-size:0.78rem;">Secure payment · No hidden fees</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /booking-layout -->
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+<script src="main.js"></script>
+<script>
+  // ── State ─────────────────────────────────────────────
+  const params   = new URLSearchParams(window.location.search);
+  const HOTEL_MAP = {
+    meridian: 'The Meridian Grand',
+    harbour:  'Harbour Suites Bengaluru',
+    atlas:    'The Atlas, Goa',
+  };
+  const ROOM_MAP = {
+    standard: { name: 'Standard Double', price: 5200 },
+    deluxe:   { name: 'Deluxe King',     price: 8200 },
+    suite:    { name: 'Superior Suite',  price: 14500 },
+    ocean:    { name: 'Ocean View Room', price: 11800 },
+  };
+
+  const hotel    = params.get('hotel') || 'meridian';
+  const type     = params.get('type')  || 'deluxe';
+  const checkIn  = params.get('checkIn')  || '';
+  const checkOut = params.get('checkOut') || '';
+  const guests   = params.get('guests')   || 2;
+
+  const hotelName = HOTEL_MAP[hotel] || 'The Meridian Grand';
+  const roomInfo  = ROOM_MAP[type]   || ROOM_MAP.deluxe;
+  const nights    = checkIn && checkOut ? Math.max(1, Math.round((new Date(checkOut)-new Date(checkIn))/(86400000))) : 3;
+
+  let addonTotal = 0;
+  let currentStep = 1;
+
+  function calcTotals() {
+    const roomCost = roomInfo.price * nights;
+    const tax      = Math.round((roomCost + addonTotal) * 0.18);
+    const total    = roomCost + addonTotal + tax;
+    return { roomCost, tax, total };
+  }
+
+  function updateSummary() {
+    const { roomCost, tax, total } = calcTotals();
+    document.getElementById('sumHotel').textContent    = hotelName;
+    document.getElementById('sumRoomName').textContent = `${roomInfo.name} · ${checkIn ? checkIn : '—'}`;
+    document.getElementById('sumCI').textContent       = checkIn  || '—';
+    document.getElementById('sumCO').textContent       = checkOut || '—';
+    document.getElementById('sumNights').textContent   = nights;
+    document.getElementById('sumRoomCost').textContent = `₹${roomCost.toLocaleString()}`;
+    document.getElementById('sumTax').textContent      = `₹${tax.toLocaleString()}`;
+    document.getElementById('sumTotal').textContent    = `₹${total.toLocaleString()}`;
+
+    // Step 1 details
+    document.getElementById('s1Hotel').textContent   = hotelName;
+    document.getElementById('s1Room').textContent    = roomInfo.name;
+    document.getElementById('s1CheckIn').textContent  = checkIn  || '—';
+    document.getElementById('s1CheckOut').textContent = checkOut || '—';
+    document.getElementById('s1Nights').textContent  = `${nights} night${nights!==1?'s':''}`;
+    document.getElementById('s1Guests').textContent  = `${guests} guest${guests>1?'s':''}`;
+
+    // Pay totals
+    document.getElementById('pay-room').textContent   = `₹${roomCost.toLocaleString()}`;
+    document.getElementById('pay-addons').textContent = `₹${addonTotal.toLocaleString()}`;
+    document.getElementById('pay-tax').textContent    = `₹${tax.toLocaleString()}`;
+    document.getElementById('pay-total').textContent  = `₹${total.toLocaleString()}`;
+
+    if (addonTotal > 0) {
+      document.getElementById('addonRow').style.display = '';
+      document.getElementById('sumAddonCost').textContent = `₹${addonTotal.toLocaleString()}`;
+    }
+  }
+
+  updateSummary();
+
+  function toggleAddon(el, key, price) {
+    const wasSelected = el.classList.contains('selected');
+    el.classList.toggle('selected');
+    addonTotal = wasSelected ? addonTotal - price : addonTotal + price;
+    updateSummary();
+    showToast(wasSelected ? `${key} removed` : `${key} added`, 'info');
+  }
+
+  function goStep(n) {
+    if (n > 4) return;
+    // Mark completed steps
+    for (let i = 1; i < n; i++) {
+      const el = document.getElementById(`stepEl-${i}`);
+      el.className = 'step completed';
+      el.querySelector('.step-circle').innerHTML = '<i class="fa-solid fa-check" style="font-size:0.7rem;"></i>';
+    }
+    // Active
+    const active = document.getElementById(`stepEl-${n}`);
+    if (active) active.className = 'step active';
+    // Pending
+    for (let i = n + 1; i <= 4; i++) {
+      const el = document.getElementById(`stepEl-${i}`);
+      if (el) { el.className = 'step pending'; el.querySelector('.step-circle').innerHTML = i; }
+    }
+    document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+    const panel = document.getElementById(`step-${n}`);
+    if (panel) {
+      panel.classList.add('active');
+      panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    currentStep = n;
+  }
+
+  function validateStep2() {
+    const first = document.getElementById('gFirstName').value.trim();
+    const last  = document.getElementById('gLastName').value.trim();
+    const email = document.getElementById('gEmail').value.trim();
+    const phone = document.getElementById('gPhone').value.trim();
+    const policy = document.getElementById('policyCheck').checked;
+    if (!first || !last || !email || !phone) { showToast('Please fill in all required fields', 'error'); return; }
+    if (!policy) { showToast('Please agree to the cancellation policy', 'error'); return; }
+    goStep(3);
+  }
+
+  async function processPayment() {
+    const btn  = document.getElementById('payBtn');
+    const text = document.getElementById('payBtnText');
+    const spin = document.getElementById('payLoader');
+    btn.disabled = true; text.style.display = 'none'; spin.style.display = '';
+
+    await new Promise(r => setTimeout(r, 2000));
+
+    // Populate confirmation
+    const { total } = calcTotals();
+    const ref = 'BKG-' + new Date().getFullYear() + '-' + Math.floor(1000 + Math.random() * 9000);
+    document.getElementById('bookingRef').textContent    = ref;
+    document.getElementById('confEmail').textContent     = document.getElementById('gEmail').value || 'your email';
+    document.getElementById('conf-hotel').textContent   = hotelName;
+    document.getElementById('conf-room').textContent    = roomInfo.name;
+    document.getElementById('conf-ci').textContent      = checkIn  || '—';
+    document.getElementById('conf-co').textContent      = checkOut || '—';
+    document.getElementById('conf-guests').textContent  = `${guests} guest(s)`;
+    document.getElementById('conf-total').textContent   = `₹${total.toLocaleString()}`;
+
+    btn.disabled = false; text.style.display = ''; spin.style.display = 'none';
+    showToast('Payment successful!', 'success');
+    goStep(4);
+  }
+
+  function setPayMethod(btn, method) {
+    document.querySelectorAll('.tabs .tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('payCard').style.display      = method === 'card'       ? '' : 'none';
+    document.getElementById('payUPI').style.display       = method === 'upi'        ? '' : 'none';
+    document.getElementById('payNetBanking').style.display= method === 'netbanking' ? '' : 'none';
+  }
+
+  function formatCard(inp) {
+    let v = inp.value.replace(/\D/g,'').substring(0,16);
+    inp.value = v.replace(/(.{4})/g,'$1 ').trim();
+  }
+
+  function formatExpiry(inp) {
+    let v = inp.value.replace(/\D/g,'').substring(0,4);
+    if (v.length > 2) v = v.substring(0,2) + ' / ' + v.substring(2);
+    inp.value = v;
+  }
+</script>
+</body>
+</html>

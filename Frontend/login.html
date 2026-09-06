@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign In — Velour Hotels</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    body { min-height: 100vh; display: flex; }
+
+    .auth-split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: 100vh;
+      width: 100%;
+    }
+
+    /* Left decorative panel */
+    .auth-panel {
+      background:
+        radial-gradient(ellipse at 30% 60%, rgba(201,168,76,0.1) 0%, transparent 55%),
+        linear-gradient(160deg, #08121F 0%, #0D1D30 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 3rem;
+      border-right: 1px solid var(--gold-border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .auth-panel-grid {
+      position: absolute;
+      inset: 0;
+      opacity: 0.03;
+      background-image:
+        linear-gradient(var(--gold) 1px, transparent 1px),
+        linear-gradient(90deg, var(--gold) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+
+    .auth-panel-brand {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      color: var(--pearl);
+      font-weight: 300;
+      letter-spacing: 0.04em;
+      position: relative;
+    }
+
+    .auth-panel-quote {
+      position: relative;
+    }
+
+    .quote-mark {
+      font-family: var(--font-display);
+      font-size: 6rem;
+      color: var(--gold);
+      opacity: 0.2;
+      line-height: 1;
+      margin-bottom: -1rem;
+    }
+
+    .quote-text {
+      font-family: var(--font-display);
+      font-style: italic;
+      font-size: 1.5rem;
+      font-weight: 300;
+      color: var(--pearl);
+      line-height: 1.5;
+      max-width: 36ch;
+    }
+
+    .quote-author {
+      margin-top: 1rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      letter-spacing: 0.06em;
+    }
+
+    .auth-panel-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      position: relative;
+    }
+
+    .auth-stat {
+      background: rgba(201,168,76,0.06);
+      border: 1px solid var(--gold-border);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+
+    .auth-stat-num {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      font-weight: 300;
+      color: var(--pearl);
+    }
+
+    .auth-stat-lbl {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 0.15rem;
+    }
+
+    /* Right form panel */
+    .auth-form-panel {
+      background: var(--navy-mid);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+
+    .auth-form-box {
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .auth-form-header {
+      margin-bottom: 2rem;
+    }
+
+    .auth-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      text-decoration: none;
+      margin-bottom: 1.5rem;
+      transition: color var(--transition);
+    }
+    .auth-back:hover { color: var(--gold); }
+
+    .auth-title {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 300;
+      color: var(--pearl);
+      margin-bottom: 0.35rem;
+    }
+
+    .auth-subtitle { font-size: 0.875rem; color: var(--text-muted); }
+
+    .divider-or {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin: 1.5rem 0;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    .divider-or::before, .divider-or::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--gold-border);
+    }
+
+    .auth-switch {
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 1.5rem;
+    }
+    .auth-switch a { color: var(--gold); text-decoration: none; }
+    .auth-switch a:hover { color: var(--gold-bright); }
+
+    .auth-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--gold-border);
+      margin-bottom: 1.75rem;
+    }
+
+    .auth-tab {
+      padding: 0.75rem 1.5rem;
+      background: none;
+      border: none;
+      font-family: var(--font-ui);
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: all var(--transition);
+    }
+
+    .auth-tab.active {
+      color: var(--gold);
+      border-bottom-color: var(--gold);
+    }
+
+    .auth-tab:hover:not(.active) { color: var(--pearl-dim); }
+
+    .role-selector {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .role-option {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.75rem 1rem;
+      background: var(--surface-2);
+      border: 1px solid var(--gold-border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all var(--transition);
+      font-size: 0.85rem;
+      color: var(--pearl-dim);
+    }
+
+    .role-option.selected {
+      border-color: var(--gold);
+      background: var(--gold-wash);
+      color: var(--gold-bright);
+    }
+
+    .role-option input { display: none; }
+
+    @media (max-width: 768px) {
+      .auth-split { grid-template-columns: 1fr; }
+      .auth-panel { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="auth-split">
+  <!-- ── Left panel ──────────────────────────────────────── -->
+  <div class="auth-panel">
+    <div class="auth-panel-grid"></div>
+    <a href="index.html" class="auth-panel-brand">Velour Hotels</a>
+
+    <div class="auth-panel-quote">
+      <div class="quote-mark">"</div>
+      <div class="quote-text">The best hotels don't just give you a room — they give you a reason to stay.</div>
+      <div class="quote-author">— The Velour Philosophy</div>
+    </div>
+
+    <div class="auth-panel-stats">
+      <div class="auth-stat">
+        <div class="auth-stat-num">240+</div>
+        <div class="auth-stat-lbl">Properties</div>
+      </div>
+      <div class="auth-stat">
+        <div class="auth-stat-num">18k</div>
+        <div class="auth-stat-lbl">Guests served</div>
+      </div>
+      <div class="auth-stat">
+        <div class="auth-stat-num">48h</div>
+        <div class="auth-stat-lbl">Free cancellation</div>
+      </div>
+      <div class="auth-stat">
+        <div class="auth-stat-num">4.9★</div>
+        <div class="auth-stat-lbl">Avg rating</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Right form panel ─────────────────────────────────── -->
+  <div class="auth-form-panel">
+    <div class="auth-form-box">
+      <a href="index.html" class="auth-back">
+        <i class="fa-solid fa-arrow-left"></i> Back to home
+      </a>
+
+      <!-- Tabs -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="loginTab" onclick="switchTab('login')">Sign In</button>
+        <button class="auth-tab" id="registerTab" onclick="switchTab('register')">Create Account</button>
+      </div>
+
+      <!-- ── Login Form ────────────────────────────────────── -->
+      <div id="loginPanel">
+        <div class="auth-form-header">
+          <div class="auth-title">Welcome back</div>
+          <div class="auth-subtitle">Sign in to manage your bookings</div>
+        </div>
+
+        <form id="loginForm" onsubmit="handleLogin(event)" novalidate>
+          <div class="form-group">
+            <label class="form-label">Email address</label>
+            <div class="input-icon-wrap">
+              <i class="fa-regular fa-envelope icon"></i>
+              <input type="email" class="form-control" id="loginEmail" placeholder="you@example.com" required autocomplete="email" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" style="display:flex;justify-content:space-between;">
+              <span>Password</span>
+              <a href="#" style="color:var(--gold);font-size:0.75rem;text-decoration:none;" onclick="showToast('Password reset coming soon','info')">Forgot?</a>
+            </label>
+            <div class="input-icon-wrap">
+              <i class="fa-solid fa-lock icon"></i>
+              <input type="password" class="form-control" id="loginPassword" placeholder="Your password" required autocomplete="current-password"
+                     style="padding-right:2.5rem;" />
+              <button type="button" onclick="togglePwd('loginPassword')"
+                style="position:absolute;right:0.9rem;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.85rem;">
+                <i class="fa-regular fa-eye" id="loginPwdIcon"></i>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:0.85rem;" id="loginBtn">
+            <span id="loginBtnText">Sign in</span>
+            <span id="loginLoader" style="display:none;" class="loader"></span>
+          </button>
+        </form>
+
+        <!-- Demo role links -->
+        <div class="divider-or">Try a demo account</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
+          <button class="btn btn-ghost btn-sm" style="justify-content:center;" onclick="fillDemo('guest')">
+            <i class="fa-solid fa-user"></i> Guest Demo
+          </button>
+          <button class="btn btn-ghost btn-sm" style="justify-content:center;" onclick="fillDemo('admin')">
+            <i class="fa-solid fa-shield-halved"></i> Admin Demo
+          </button>
+        </div>
+      </div>
+
+      <!-- ── Register Form ─────────────────────────────────── -->
+      <div id="registerPanel" style="display:none;">
+        <div class="auth-form-header">
+          <div class="auth-title">Create an account</div>
+          <div class="auth-subtitle">Start booking in minutes</div>
+        </div>
+
+        <form id="registerForm" onsubmit="handleRegister(event)" novalidate>
+          <div class="form-group">
+            <label class="form-label">Full name</label>
+            <div class="input-icon-wrap">
+              <i class="fa-solid fa-user icon"></i>
+              <input type="text" class="form-control" id="regName" placeholder="Your full name" required autocomplete="name" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Email address</label>
+            <div class="input-icon-wrap">
+              <i class="fa-regular fa-envelope icon"></i>
+              <input type="email" class="form-control" id="regEmail" placeholder="you@example.com" required autocomplete="email" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <div class="input-icon-wrap">
+              <i class="fa-solid fa-lock icon"></i>
+              <input type="password" class="form-control" id="regPassword" placeholder="At least 8 characters" required minlength="8"
+                     style="padding-right:2.5rem;" />
+              <button type="button" onclick="togglePwd('regPassword')"
+                style="position:absolute;right:0.9rem;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.85rem;">
+                <i class="fa-regular fa-eye" id="regPwdIcon"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">I am registering as</label>
+            <div class="role-selector">
+              <label class="role-option selected" id="roleGuest" onclick="selectRole('guest')">
+                <input type="radio" name="role" value="guest" checked />
+                <i class="fa-solid fa-user"></i> Guest
+              </label>
+              <label class="role-option" id="roleStaff" onclick="selectRole('staff')">
+                <input type="radio" name="role" value="staff" />
+                <i class="fa-solid fa-person-shelter"></i> Staff
+              </label>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:0.85rem;" id="regBtn">
+            <span id="regBtnText">Create account</span>
+            <span id="regLoader" style="display:none;" class="loader"></span>
+          </button>
+
+          <p style="font-size:0.72rem;color:var(--text-muted);text-align:center;margin-top:1rem;">
+            By creating an account you agree to our
+            <a href="#" style="color:var(--gold);text-decoration:none;">Terms of Service</a> and
+            <a href="#" style="color:var(--gold);text-decoration:none;">Privacy Policy</a>.
+          </p>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="main.js"></script>
+<script>
+  let selectedRole = 'guest';
+
+  function switchTab(tab) {
+    document.getElementById('loginPanel').style.display   = tab === 'login' ? '' : 'none';
+    document.getElementById('registerPanel').style.display = tab === 'register' ? '' : 'none';
+    document.getElementById('loginTab').classList.toggle('active', tab === 'login');
+    document.getElementById('registerTab').classList.toggle('active', tab === 'register');
+  }
+
+  // Check for #register hash
+  if (window.location.hash === '#register') switchTab('register');
+
+  function togglePwd(id) {
+    const inp = document.getElementById(id);
+    const icon = document.getElementById(id + 'Icon');
+    if (inp.type === 'password') {
+      inp.type = 'text';
+      icon.className = 'fa-regular fa-eye-slash';
+    } else {
+      inp.type = 'password';
+      icon.className = 'fa-regular fa-eye';
+    }
+  }
+
+  function selectRole(role) {
+    selectedRole = role;
+    document.getElementById('roleGuest').classList.toggle('selected', role === 'guest');
+    document.getElementById('roleStaff').classList.toggle('selected', role === 'staff');
+  }
+
+  function fillDemo(role) {
+    document.getElementById('loginEmail').value    = role === 'admin' ? 'admin@velour.com' : 'guest@velour.com';
+    document.getElementById('loginPassword').value = 'demo12345';
+    showToast(`Demo ${role} credentials filled`, 'info');
+  }
+
+  async function handleLogin(e) {
+    e.preventDefault();
+    const email    = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    if (!email || !password) { showToast('Please fill in all fields', 'error'); return; }
+
+    const btn  = document.getElementById('loginBtn');
+    const text = document.getElementById('loginBtnText');
+    const spin = document.getElementById('loginLoader');
+    btn.disabled = true; text.style.display = 'none'; spin.style.display = '';
+
+    try {
+      // Demo mode: simulate API response
+      await new Promise(r => setTimeout(r, 900));
+      const role = email.includes('admin') ? 'admin' : email.includes('staff') ? 'staff' : 'guest';
+      const user = { _id: 'u001', name: role === 'admin' ? 'Admin User' : 'Priya Anand', email, role };
+      saveAuth('demo_jwt_token_' + Date.now(), user);
+      showToast('Welcome back!', 'success');
+      setTimeout(() => {
+        window.location.href = role === 'admin' ? 'admin/dashboard.html' : 'guest-dashboard.html';
+      }, 600);
+    } catch(err) {
+      btn.disabled = false; text.style.display = ''; spin.style.display = 'none';
+    }
+  }
+
+  async function handleRegister(e) {
+    e.preventDefault();
+    const name     = document.getElementById('regName').value.trim();
+    const email    = document.getElementById('regEmail').value.trim();
+    const password = document.getElementById('regPassword').value;
+    if (!name || !email || !password) { showToast('Please fill in all fields', 'error'); return; }
+    if (password.length < 8) { showToast('Password must be at least 8 characters', 'error'); return; }
+
+    const btn  = document.getElementById('regBtn');
+    const text = document.getElementById('regBtnText');
+    const spin = document.getElementById('regLoader');
+    btn.disabled = true; text.style.display = 'none'; spin.style.display = '';
+
+    try {
+      await new Promise(r => setTimeout(r, 900));
+      const user = { _id: 'u_new', name, email, role: selectedRole };
+      saveAuth('demo_jwt_' + Date.now(), user);
+      showToast('Account created successfully!', 'success');
+      setTimeout(() => { window.location.href = 'guest-dashboard.html'; }, 600);
+    } catch(err) {
+      btn.disabled = false; text.style.display = ''; spin.style.display = 'none';
+    }
+  }
+</script>
+</body>
+</html>

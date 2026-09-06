@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard — Velour Hotels</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    /* ── Admin-specific ───────────────────────────────────── */
+    .main-content { background: var(--navy-deep); min-height: 100vh; }
+
+    .page-content { padding: 2rem; }
+
+    /* Tab panels */
+    .admin-panel { display: none; }
+    .admin-panel.active { display: block; }
+
+    /* Quick action card */
+    .quick-action {
+      background: var(--surface-2);
+      border: 1px solid var(--gold-border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      cursor: pointer;
+      transition: all var(--transition);
+      text-align: center;
+    }
+    .quick-action:hover { background: var(--surface-3); border-color: var(--gold); transform: translateY(-2px); }
+    .quick-action i { font-size: 1.5rem; color: var(--gold); margin-bottom: 0.5rem; display: block; }
+    .quick-action span { font-size: 0.8rem; color: var(--pearl-dim); }
+
+    /* Checkin row */
+    .checkin-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 1.25rem;
+      background: var(--surface-2);
+      border: 1px solid var(--gold-border);
+      border-radius: var(--radius);
+      margin-bottom: 0.6rem;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .checkin-info { flex: 1; min-width: 200px; }
+    .checkin-name { font-size: 0.9rem; font-weight: 500; color: var(--pearl); }
+    .checkin-meta { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.15rem; }
+
+    /* Hotel form */
+    .hotel-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+    /* Pricing rule row */
+    .pricing-row {
+      display: flex; align-items: center; gap: 1rem;
+      padding: 0.75rem 1rem;
+      background: var(--surface-2);
+      border: 1px solid var(--gold-border);
+      border-radius: var(--radius);
+      margin-bottom: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .pricing-row span { font-size: 0.85rem; color: var(--pearl-dim); }
+    .pricing-badge {
+      background: var(--gold-wash); border: 1px solid var(--gold-border);
+      border-radius: 99px; padding: 0.2rem 0.65rem;
+      font-size: 0.75rem; color: var(--gold-bright); font-weight: 600;
+    }
+
+    @media (max-width: 768px) {
+      .hotel-form-grid { grid-template-columns: 1fr; }
+      .page-content { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- ── Admin Sidebar ──────────────────────────────────── -->
+  <aside class="sidebar" id="sidebar">
+    <a href="index.html" class="sidebar-brand">
+      <div class="sidebar-logo-icon"><i class="fa-solid fa-hotel"></i></div>
+      <span class="sidebar-brand-text">Velour</span>
+    </a>
+
+    <nav class="sidebar-nav">
+      <div class="sidebar-section-label">Overview</div>
+      <a href="#" class="sidebar-link active" onclick="showPanel('dashboard',this)">
+        <span class="sidebar-icon"><i class="fa-solid fa-gauge-high"></i></span> Dashboard
+      </a>
+
+      <div class="sidebar-section-label">Properties</div>
+      <a href="#" class="sidebar-link" onclick="showPanel('hotels',this)">
+        <span class="sidebar-icon"><i class="fa-solid fa-building"></i></span> Hotels
+      </a>
+      <a href="#" class="sidebar-link" onclick="showPanel('rooms',this)">
+        <span class="sidebar-icon"><i class="fa-solid fa-door-open"></i></span> Rooms &amp; Types
+      </a>
+      <a href="#" class="sidebar-link" onclick="showPanel('pricing',this)">
+        <span class="sidebar-icon"><i class="fa-solid fa-tags"></i></span> Pricing Rules
+      </a>
+
+      <div class="sidebar-section-label">Operations</div>
+      <a href="#" class="sidebar-link" onclick="showPanel('bookings',this)">
+        <span class="sidebar-icon"><i class="fa-solid fa-calendar-days"></i></span> Bookings
+        <span class="sidebar-badge">14</span>
+      </a>
+      <a href="#" class="sidebar-link" onclick="showPanel('checkinout',this)">
+        <span class="sidebar-icon"><i class="fa-solid fa-person-walking-arrow-right"></i></span> Check-in / Out
+        <span class="sidebar-badge">3</span>
+      </a>
+      <a href="#" class="sidebar-link" onclick="showPanel('housekeeping',this)">
+        <span class="sidebar-icon"><i class="fa-solid fa-broom"></i></span> Housekeeping
+      </a>
+
+      <div class="sidebar-section-label">Analytics</div>
+      <a href="#" class="sidebar-link" onclick="showPanel('reports',this)">
+        <span class="sidebar-icon"><i class="fa-solid fa-chart-line"></i></span> Reports
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-user" onclick="window.location.href='../login.html'">
+        <div class="user-avatar" id="sidebarUserAvatar">A</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebarUserName">Admin User</div>
+          <div class="user-role" id="sidebarUserRole">Administrator</div>
+        </div>
+        <i class="fa-solid fa-arrow-right-from-bracket" style="color:var(--text-muted);font-size:0.85rem;"></i>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Main Content ───────────────────────────────────── -->
+  <main class="main-content">
+
+    <!-- Page header -->
+    <div class="page-header">
+      <div>
+        <div class="page-title" id="pageTitle">Dashboard</div>
+        <div class="page-subtitle" id="pageSubtitle">Overview of all properties</div>
+      </div>
+      <div class="flex gap-sm">
+        <button class="btn btn-ghost btn-sm" id="sidebarToggle"><i class="fa-solid fa-bars"></i></button>
+        <button class="btn btn-outline btn-sm" onclick="showToast('Data refreshed','success')">
+          <i class="fa-solid fa-rotate"></i> Refresh
+        </button>
+        <button class="btn btn-primary btn-sm" onclick="showPanel('hotels',null);openModal('addHotelModal')">
+          <i class="fa-solid fa-plus"></i> Add Hotel
+        </button>
+      </div>
+    </div>
+
+    <div class="page-content">
+
+      <!-- ════════════════ DASHBOARD PANEL ════════════════ -->
+      <div class="admin-panel active" id="panel-dashboard">
+
+        <!-- Stats -->
+        <div class="grid-4" style="margin-bottom:2rem;">
+          <div class="stat-card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+              <div>
+                <div class="stat-value">78%</div>
+                <div class="stat-label">Occupancy rate today</div>
+              </div>
+              <div style="color:var(--gold);font-size:1.4rem;opacity:0.4;"><i class="fa-solid fa-bed"></i></div>
+            </div>
+            <div class="stat-change up mt-sm"><i class="fa-solid fa-arrow-up"></i> +6% vs last week</div>
+          </div>
+          <div class="stat-card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+              <div>
+                <div class="stat-value">₹2.4L</div>
+                <div class="stat-label">Revenue today</div>
+              </div>
+              <div style="color:var(--gold);font-size:1.4rem;opacity:0.4;"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+            </div>
+            <div class="stat-change up mt-sm"><i class="fa-solid fa-arrow-up"></i> +12% vs yesterday</div>
+          </div>
+          <div class="stat-card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+              <div>
+                <div class="stat-value">14</div>
+                <div class="stat-label">Active bookings</div>
+              </div>
+              <div style="color:var(--gold);font-size:1.4rem;opacity:0.4;"><i class="fa-solid fa-calendar-check"></i></div>
+            </div>
+            <div class="stat-change up mt-sm"><i class="fa-solid fa-arrow-up"></i> 3 check-ins today</div>
+          </div>
+          <div class="stat-card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+              <div>
+                <div class="stat-value">3</div>
+                <div class="stat-label">Hotels managed</div>
+              </div>
+              <div style="color:var(--gold);font-size:1.4rem;opacity:0.4;"><i class="fa-solid fa-building"></i></div>
+            </div>
+            <div class="stat-change mt-sm" style="color:var(--gold);">240 total rooms</div>
+          </div>
+        </div>
+
+        <!-- Charts row -->
+        <div class="grid-2" style="margin-bottom:2rem;gap:1.5rem;">
+          <div class="card">
+            <div class="card-header">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-family:var(--font-display);font-size:1rem;color:var(--pearl);">Occupancy Rate — Last 30 days</span>
+                <div class="legend">
+                  <div class="legend-item"><span class="legend-dot" style="background:#C9A84C;"></span>Occupancy %</div>
+                </div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="chart-wrap"><canvas id="occupancyChart"></canvas></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-family:var(--font-display);font-size:1rem;color:var(--pearl);">Revenue by Property</span>
+                <div class="legend">
+                  <div class="legend-item"><span class="legend-dot" style="background:#C9A84C;"></span>This month</div>
+                  <div class="legend-item"><span class="legend-dot" style="background:#3D7A58;"></span>Last month</div>
+                </div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="chart-wrap"><canvas id="revenueChart"></canvas></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Booking status + quick actions -->
+        <div class="grid-2" style="gap:1.5rem;margin-bottom:2rem;">
+          <div class="card">
+            <div class="card-header">
+              <span style="font-family:var(--font-display);font-size:1rem;color:var(--pearl);">Booking Status Breakdown</span>
+            </div>
+            <div class="card-body">
+              <div class="chart-wrap" style="height:200px;"><canvas id="statusChart"></canvas></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <span style="font-family:var(--font-display);font-size:1rem;color:var(--pearl);">Quick Actions</span>
+            </div>
+            <div class="card-body">
+              <div class="grid-2" style="gap:0.75rem;">
+                <div class="quick-action" onclick="showPanel('checkinout',null)">
+                  <i class="fa-solid fa-person-walking-arrow-right"></i><span>Process Check-in</span>
+                </div>
+                <div class="quick-action" onclick="showPanel('checkinout',null)">
+                  <i class="fa-solid fa-person-walking-arrow-left"></i><span>Process Check-out</span>
+                </div>
+                <div class="quick-action" onclick="showPanel('housekeeping',null)">
+                  <i class="fa-solid fa-broom"></i><span>Housekeeping Board</span>
+                </div>
+                <div class="quick-action" onclick="showPanel('reports',null)">
+                  <i class="fa-solid fa-file-pdf"></i><span>Generate Report</span>
+                </div>
+                <div class="quick-action" onclick="openModal('addHotelModal')">
+                  <i class="fa-solid fa-plus"></i><span>Add Hotel</span>
+                </div>
+                <div class="quick-action" onclick="showPanel('pricing',null)">
+                  <i class="fa-solid fa-tags"></i><span>Update Pricing</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent bookings -->
+        <div class="card">
+          <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-family:var(--font-display);font-size:1rem;color:var(--pearl);">Recent Bookings</span>
+            <button class="btn btn-ghost btn-sm" onclick="showPanel('bookings',null)">View all</button>
+          </div>
+          <div class="card-body" style="padding:0;">
+            <div class="table-wrap" style="border:none;border-radius:0;">
+              <table>
+                <thead>
+                  <tr><th>Booking ID</th><th>Guest</th><th>Hotel</th><th>Room</th><th>Check-in</th><th>Amount</th><th>Status</th><th>Action</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td><strong>BKG-2026-0091</strong></td><td>Priya Anand</td><td>The Meridian Grand</td><td>Deluxe King</td><td>15 Sep</td><td>₹24,600</td><td><span class="badge badge-green"><span class="status-dot dot-confirmed"></span> Confirmed</span></td><td><button class="btn btn-ghost btn-sm" onclick="showBookingDetail('BKG-2026-0091')">View</button></td></tr>
+                  <tr><td><strong>BKG-2026-0090</strong></td><td>Rohit Krishnamurthy</td><td>Harbour Suites</td><td>Standard Twin</td><td>14 Sep</td><td>₹10,800</td><td><span class="badge badge-blue"><span class="status-dot dot-checkedin"></span> Checked-in</span></td><td><button class="btn btn-primary btn-sm" onclick="doCheckout('BKG-2026-0090')">Check-out</button></td></tr>
+                  <tr><td><strong>BKG-2026-0089</strong></td><td>Arjun Joshi</td><td>The Atlas, Goa</td><td>Ocean View</td><td>13 Sep</td><td>₹47,200</td><td><span class="badge badge-muted"><span class="status-dot dot-completed"></span> Completed</span></td><td><button class="btn btn-ghost btn-sm" onclick="showToast('Invoice generated','info')">Invoice</button></td></tr>
+                  <tr><td><strong>BKG-2026-0088</strong></td><td>Shreya Mehta</td><td>The Meridian Grand</td><td>Superior Suite</td><td>12 Sep</td><td>₹52,200</td><td><span class="badge badge-gold"><span class="status-dot dot-reserved"></span> Reserved</span></td><td><button class="btn btn-primary btn-sm" onclick="doCheckin('BKG-2026-0088')">Check-in</button></td></tr>
+                  <tr><td><strong>BKG-2026-0087</strong></td><td>Aditya Sharma</td><td>Harbour Suites</td><td>Deluxe King</td><td>11 Sep</td><td>₹16,200</td><td><span class="badge badge-rose"><span class="status-dot dot-cancelled"></span> Cancelled</span></td><td><span style="color:var(--text-muted);font-size:0.78rem;">Refunded</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /dashboard panel -->
+
+      <!-- ════════════════ HOTELS PANEL ════════════════════ -->
+      <div class="admin-panel" id="panel-hotels">
+        <div class="flex justify-between items-center mb-lg">
+          <div><div style="font-family:var(--font-display);font-size:1.4rem;color:var(--pearl);">Hotel Properties</div><div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.2rem;">3 properties managed</div></div>
+          <button class="btn btn-primary" onclick="openModal('addHotelModal')"><i class="fa-solid fa-plus"></i> Add Hotel</button>
+        </div>
+        <div class="grid-3" style="margin-bottom:2rem;">
+          <div class="card">
+            <div class="card-body">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;">
+                <div style="width:44px;height:44px;background:var(--gold-wash);border:1px solid var(--gold-border);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:1.2rem;">
+                  <i class="fa-solid fa-building"></i>
+                </div>
+                <span class="badge badge-green"><span class="status-dot dot-confirmed"></span> Active</span>
+              </div>
+              <div style="font-family:var(--font-display);font-size:1.1rem;color:var(--pearl);margin-bottom:0.2rem;">The Meridian Grand</div>
+              <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:1rem;"><i class="fa-solid fa-location-dot"></i> Mumbai, Maharashtra</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:1rem;">
+                <div style="background:var(--surface-3);border-radius:var(--radius-sm);padding:0.6rem;text-align:center;"><div style="font-family:var(--font-display);font-size:1.2rem;color:var(--pearl);">84</div><div style="font-size:0.68rem;color:var(--text-muted);">Rooms</div></div>
+                <div style="background:var(--surface-3);border-radius:var(--radius-sm);padding:0.6rem;text-align:center;"><div style="font-family:var(--font-display);font-size:1.2rem;color:var(--pearl);">82%</div><div style="font-size:0.68rem;color:var(--text-muted);">Occupancy</div></div>
+              </div>
+              <div class="amenity-list" style="margin-bottom:1rem;">
+                <span class="amenity-pill"><i class="fa-solid fa-wifi"></i></span>
+                <span class="amenity-pill"><i class="fa-solid fa-water-ladder"></i></span>
+                <span class="amenity-pill"><i class="fa-solid fa-spa"></i></span>
+                <span class="amenity-pill"><i class="fa-solid fa-star" style="color:var(--gold);"></i> 5★</span>
+              </div>
+              <div class="flex gap-sm">
+                <button class="btn btn-outline btn-sm" style="flex:1;justify-content:center;" onclick="editHotel('meridian')">Edit</button>
+                <button class="btn btn-ghost btn-sm" onclick="showPanel('rooms',null)"><i class="fa-solid fa-door-open"></i></button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-body">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;">
+                <div style="width:44px;height:44px;background:var(--gold-wash);border:1px solid var(--gold-border);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:1.2rem;"><i class="fa-solid fa-building"></i></div>
+                <span class="badge badge-green"><span class="status-dot dot-confirmed"></span> Active</span>
+              </div>
+              <div style="font-family:var(--font-display);font-size:1.1rem;color:var(--pearl);margin-bottom:0.2rem;">Harbour Suites Bengaluru</div>
+              <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:1rem;"><i class="fa-solid fa-location-dot"></i> Bengaluru, Karnataka</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:1rem;">
+                <div style="background:var(--surface-3);border-radius:var(--radius-sm);padding:0.6rem;text-align:center;"><div style="font-family:var(--font-display);font-size:1.2rem;color:var(--pearl);">96</div><div style="font-size:0.68rem;color:var(--text-muted);">Rooms</div></div>
+                <div style="background:var(--surface-3);border-radius:var(--radius-sm);padding:0.6rem;text-align:center;"><div style="font-family:var(--font-display);font-size:1.2rem;color:var(--pearl);">71%</div><div style="font-size:0.68rem;color:var(--text-muted);">Occupancy</div></div>
+              </div>
+              <div class="amenity-list" style="margin-bottom:1rem;">
+                <span class="amenity-pill"><i class="fa-solid fa-wifi"></i></span>
+                <span class="amenity-pill"><i class="fa-solid fa-dumbbell"></i></span>
+                <span class="amenity-pill"><i class="fa-solid fa-star" style="color:var(--gold);"></i> 4★</span>
+              </div>
+              <div class="flex gap-sm">
+                <button class="btn btn-outline btn-sm" style="flex:1;justify-content:center;" onclick="editHotel('harbour')">Edit</button>
+                <button class="btn btn-ghost btn-sm" onclick="showPanel('rooms',null)"><i class="fa-solid fa-door-open"></i></button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-body">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;">
+                <div style="width:44px;height:44px;background:var(--gold-wash);border:1px solid var(--gold-border);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:1.2rem;"><i class="fa-solid fa-building"></i></div>
+                <span class="badge badge-green"><span class="status-dot dot-confirmed"></span> Active</span>
+              </div>
+              <div style="font-family:var(--font-display);font-size:1.1rem;color:var(--pearl);margin-bottom:0.2rem;">The Atlas, Goa</div>
+              <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:1rem;"><i class="fa-solid fa-location-dot"></i> Panaji, Goa</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:1rem;">
+                <div style="background:var(--surface-3);border-radius:var(--radius-sm);padding:0.6rem;text-align:center;"><div style="font-family:var(--font-display);font-size:1.2rem;color:var(--pearl);">60</div><div style="font-size:0.68rem;color:var(--text-muted);">Rooms</div></div>
+                <div style="background:var(--surface-3);border-radius:var(--radius-sm);padding:0.6rem;text-align:center;"><div style="font-family:var(--font-display);font-size:1.2rem;color:var(--pearl);">94%</div><div style="font-size:0.68rem;color:var(--text-muted);">Occupancy</div></div>
+              </div>
+              <div class="amenity-list" style="margin-bottom:1rem;">
+                <span class="amenity-pill"><i class="fa-solid fa-water-ladder"></i></span>
+                <span class="amenity-pill"><i class="fa-solid fa-umbrella-beach"></i></span>
+                <span class="amenity-pill"><i class="fa-solid fa-star" style="color:var(--gold);"></i> 4.5★</span>
+              </div>
+              <div class="flex gap-sm">
+                <button class="btn btn-outline btn-sm" style="flex:1;justify-content:center;" onclick="editHotel('atlas')">Edit</button>
+                <button class="btn btn-ghost btn-sm" onclick="showPanel('rooms',null)"><i class="fa-solid fa-door-open"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════ ROOMS PANEL ═════════════════════ -->
+      <div class="admin-panel" id="panel-rooms">
+        <div class="flex justify-between items-center mb-lg">
+          <div><div style="font-family:var(--font-display);font-size:1.4rem;color:var(--pearl);">Rooms &amp; Room Types</div></div>
+          <button class="btn btn-primary" onclick="openModal('addRoomTypeModal')"><i class="fa-solid fa-plus"></i> Add Room Type</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Room Type</th><th>Hotel</th><th>Base Price</th><th>Capacity</th><th>Total Rooms</th><th>Available</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Standard Double</strong></td><td>The Meridian Grand</td><td>₹5,200</td><td>2</td><td>24</td><td>6</td><td><span class="badge badge-green">Active</span></td><td><div class="flex gap-sm"><button class="btn btn-ghost btn-sm" onclick="editRoomType(this)">Edit</button><button class="btn btn-danger btn-sm" onclick="confirmDelete('room type')">Delete</button></div></td></tr>
+              <tr><td><strong>Deluxe King</strong></td><td>The Meridian Grand</td><td>₹8,200</td><td>3</td><td>36</td><td>12</td><td><span class="badge badge-green">Active</span></td><td><div class="flex gap-sm"><button class="btn btn-ghost btn-sm" onclick="editRoomType(this)">Edit</button><button class="btn btn-danger btn-sm" onclick="confirmDelete('room type')">Delete</button></div></td></tr>
+              <tr><td><strong>Superior Suite</strong></td><td>The Meridian Grand</td><td>₹14,500</td><td>4</td><td>12</td><td>3</td><td><span class="badge badge-green">Active</span></td><td><div class="flex gap-sm"><button class="btn btn-ghost btn-sm" onclick="editRoomType(this)">Edit</button><button class="btn btn-danger btn-sm" onclick="confirmDelete('room type')">Delete</button></div></td></tr>
+              <tr><td><strong>Standard Twin</strong></td><td>Harbour Suites</td><td>₹3,600</td><td>2</td><td>48</td><td>22</td><td><span class="badge badge-green">Active</span></td><td><div class="flex gap-sm"><button class="btn btn-ghost btn-sm" onclick="editRoomType(this)">Edit</button><button class="btn btn-danger btn-sm" onclick="confirmDelete('room type')">Delete</button></div></td></tr>
+              <tr><td><strong>Deluxe King</strong></td><td>Harbour Suites</td><td>₹5,400</td><td>2</td><td>36</td><td>8</td><td><span class="badge badge-green">Active</span></td><td><div class="flex gap-sm"><button class="btn btn-ghost btn-sm" onclick="editRoomType(this)">Edit</button><button class="btn btn-danger btn-sm" onclick="confirmDelete('room type')">Delete</button></div></td></tr>
+              <tr><td><strong>Ocean View Room</strong></td><td>The Atlas, Goa</td><td>₹11,800</td><td>3</td><td>40</td><td>2</td><td><span class="badge badge-rose">Low stock</span></td><td><div class="flex gap-sm"><button class="btn btn-ghost btn-sm" onclick="editRoomType(this)">Edit</button><button class="btn btn-danger btn-sm" onclick="confirmDelete('room type')">Delete</button></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ════════════════ BOOKINGS PANEL ══════════════════ -->
+      <div class="admin-panel" id="panel-bookings">
+        <div class="flex justify-between items-center mb-lg" style="flex-wrap:wrap;gap:0.75rem;">
+          <div><div style="font-family:var(--font-display);font-size:1.4rem;color:var(--pearl);">All Bookings</div></div>
+          <div class="flex gap-sm flex-wrap">
+            <select class="form-control form-select" style="width:auto;font-size:0.8rem;" onchange="filterBookings(this.value)">
+              <option value="">All status</option>
+              <option>Reserved</option><option>Confirmed</option>
+              <option>Checked-in</option><option>Checked-out</option><option>Cancelled</option>
+            </select>
+            <select class="form-control form-select" style="width:auto;font-size:0.8rem;">
+              <option>All hotels</option>
+              <option>The Meridian Grand</option><option>Harbour Suites</option><option>The Atlas, Goa</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Booking ID</th><th>Guest</th><th>Hotel / Room</th><th>Check-in</th><th>Check-out</th><th>Nights</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="bookingsTable">
+              <tr><td><strong>BKG-2026-0091</strong></td><td>Priya Anand</td><td>Meridian — Deluxe King</td><td>15 Sep</td><td>18 Sep</td><td>3</td><td>₹24,600</td><td><span class="badge badge-green"><span class="status-dot dot-confirmed"></span> Confirmed</span></td><td><button class="btn btn-primary btn-sm" onclick="doCheckin('BKG-2026-0091')">Check-in</button></td></tr>
+              <tr><td><strong>BKG-2026-0090</strong></td><td>Rohit Krishnamurthy</td><td>Harbour — Standard Twin</td><td>14 Sep</td><td>16 Sep</td><td>2</td><td>₹7,200</td><td><span class="badge badge-blue"><span class="status-dot dot-checkedin"></span> Checked-in</span></td><td><button class="btn btn-primary btn-sm" onclick="doCheckout('BKG-2026-0090')">Check-out</button></td></tr>
+              <tr><td><strong>BKG-2026-0089</strong></td><td>Arjun Joshi</td><td>Atlas — Ocean View</td><td>13 Sep</td><td>18 Sep</td><td>5</td><td>₹59,000</td><td><span class="badge badge-muted"><span class="status-dot dot-completed"></span> Checked-out</span></td><td><button class="btn btn-ghost btn-sm" onclick="showToast('Invoice sent','info')">Invoice</button></td></tr>
+              <tr><td><strong>BKG-2026-0088</strong></td><td>Shreya Mehta</td><td>Meridian — Superior Suite</td><td>20 Sep</td><td>23 Sep</td><td>3</td><td>₹43,500</td><td><span class="badge badge-gold"><span class="status-dot dot-reserved"></span> Reserved</span></td><td><button class="btn btn-outline btn-sm" onclick="confirmBooking('BKG-2026-0088',this)">Confirm</button></td></tr>
+              <tr><td><strong>BKG-2026-0087</strong></td><td>Aditya Sharma</td><td>Harbour — Deluxe King</td><td>11 Sep</td><td>13 Sep</td><td>2</td><td>₹10,800</td><td><span class="badge badge-rose"><span class="status-dot dot-cancelled"></span> Cancelled</span></td><td><span style="color:var(--text-muted);font-size:0.75rem;">Refunded ₹10,800</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ════════════════ CHECK-IN / OUT PANEL ════════════ -->
+      <div class="admin-panel" id="panel-checkinout">
+        <div style="font-family:var(--font-display);font-size:1.4rem;color:var(--pearl);margin-bottom:0.5rem;">Check-in / Check-out</div>
+        <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:2rem;">Process guest arrivals and departures. All actions are timestamped.</p>
+
+        <div class="grid-2" style="gap:1.5rem;">
+          <!-- Check-ins due today -->
+          <div class="card">
+            <div class="card-header"><span style="font-family:var(--font-display);color:var(--pearl);">Due to Arrive Today</span><span class="badge badge-gold" style="margin-left:0.75rem;">3</span></div>
+            <div class="card-body">
+              <div class="checkin-row">
+                <div class="checkin-info">
+                  <div class="checkin-name">Priya Anand</div>
+                  <div class="checkin-meta">BKG-2026-0091 · Deluxe King · Room 204</div>
+                </div>
+                <div class="flex gap-sm items-center">
+                  <span class="badge badge-green">Confirmed</span>
+                  <button class="btn btn-primary btn-sm" onclick="doCheckin('BKG-2026-0091')"><i class="fa-solid fa-person-walking-arrow-right"></i> Check-in</button>
+                </div>
+              </div>
+              <div class="checkin-row">
+                <div class="checkin-info">
+                  <div class="checkin-name">Shreya Mehta</div>
+                  <div class="checkin-meta">BKG-2026-0088 · Superior Suite · Room 501</div>
+                </div>
+                <div class="flex gap-sm items-center">
+                  <span class="badge badge-gold">Reserved</span>
+                  <button class="btn btn-outline btn-sm" onclick="confirmBooking('BKG-2026-0088',this)">Confirm first</button>
+                </div>
+              </div>
+              <div class="checkin-row">
+                <div class="checkin-info">
+                  <div class="checkin-name">Walk-in Guest</div>
+                  <div class="checkin-meta">No prior booking</div>
+                </div>
+                <div class="flex gap-sm items-center">
+                  <button class="btn btn-outline btn-sm" onclick="openModal('walkinModal')"><i class="fa-solid fa-plus"></i> Walk-in</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Check-outs due today -->
+          <div class="card">
+            <div class="card-header"><span style="font-family:var(--font-display);color:var(--pearl);">Due to Depart Today</span><span class="badge badge-blue" style="margin-left:0.75rem;">2</span></div>
+            <div class="card-body">
+              <div class="checkin-row">
+                <div class="checkin-info">
+                  <div class="checkin-name">Rohit Krishnamurthy</div>
+                  <div class="checkin-meta">BKG-2026-0090 · Standard Twin · Room 112</div>
+                </div>
+                <div class="flex gap-sm items-center">
+                  <span class="badge badge-blue">Checked-in</span>
+                  <button class="btn btn-primary btn-sm" onclick="doCheckout('BKG-2026-0090')"><i class="fa-solid fa-person-walking-arrow-left"></i> Check-out</button>
+                </div>
+              </div>
+              <div class="checkin-row">
+                <div class="checkin-info">
+                  <div class="checkin-name">Arjun Joshi</div>
+                  <div class="checkin-meta">BKG-2026-0089 · Ocean View · Room 310</div>
+                </div>
+                <div class="flex gap-sm items-center">
+                  <span class="badge badge-blue">Checked-in</span>
+                  <button class="btn btn-primary btn-sm" onclick="doCheckout('BKG-2026-0089')"><i class="fa-solid fa-person-walking-arrow-left"></i> Check-out</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════ HOUSEKEEPING PANEL ══════════════ -->
+      <div class="admin-panel" id="panel-housekeeping">
+        <div style="font-family:var(--font-display);font-size:1.4rem;color:var(--pearl);margin-bottom:0.5rem;">Housekeeping Board</div>
+        <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:1.5rem;">Click any room to update its status. All changes sync to staff in real time.</p>
+
+        <div class="flex gap-sm" style="margin-bottom:1.5rem;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:0.4rem;font-size:0.8rem;"><span style="width:12px;height:12px;border-radius:3px;background:var(--sage-light);display:block;"></span> Clean</div>
+          <div style="display:flex;align-items:center;gap:0.4rem;font-size:0.8rem;"><span style="width:12px;height:12px;border-radius:3px;background:#E56B5D;display:block;"></span> Dirty</div>
+          <div style="display:flex;align-items:center;gap:0.4rem;font-size:0.8rem;"><span style="width:12px;height:12px;border-radius:3px;background:var(--amber);display:block;"></span> In Progress</div>
+          <div style="display:flex;align-items:center;gap:0.4rem;font-size:0.8rem;"><span style="width:12px;height:12px;border-radius:3px;background:#5EA8D4;display:block;"></span> Maintenance</div>
+        </div>
+
+        <div style="font-family:var(--font-display);font-size:1rem;color:var(--gold);margin-bottom:0.75rem;">The Meridian Grand · Floor 1</div>
+        <div class="hk-board" style="margin-bottom:2rem;">
+          <div class="hk-room clean"       onclick="cycleStatus(this)"><div class="hk-room-number">101</div><div class="hk-room-status">Clean</div></div>
+          <div class="hk-room dirty"       onclick="cycleStatus(this)"><div class="hk-room-number">102</div><div class="hk-room-status">Dirty</div></div>
+          <div class="hk-room in-progress" onclick="cycleStatus(this)"><div class="hk-room-number">103</div><div class="hk-room-status">In Progress</div></div>
+          <div class="hk-room clean"       onclick="cycleStatus(this)"><div class="hk-room-number">104</div><div class="hk-room-status">Clean</div></div>
+          <div class="hk-room maintenance" onclick="cycleStatus(this)"><div class="hk-room-number">105</div><div class="hk-room-status">Maintenance</div></div>
+          <div class="hk-room clean"       onclick="cycleStatus(this)"><div class="hk-room-number">106</div><div class="hk-room-status">Clean</div></div>
+          <div class="hk-room dirty"       onclick="cycleStatus(this)"><div class="hk-room-number">107</div><div class="hk-room-status">Dirty</div></div>
+          <div class="hk-room clean"       onclick="cycleStatus(this)"><div class="hk-room-number">108</div><div class="hk-room-status">Clean</div></div>
+        </div>
+
+        <div style="font-family:var(--font-display);font-size:1rem;color:var(--gold);margin-bottom:0.75rem;">The Meridian Grand · Floor 2</div>
+        <div class="hk-board">
+          <div class="hk-room clean"       onclick="cycleStatus(this)"><div class="hk-room-number">201</div><div class="hk-room-status">Clean</div></div>
+          <div class="hk-room clean"       onclick="cycleStatus(this)"><div class="hk-room-number">202</div><div class="hk-room-status">Clean</div></div>
+          <div class="hk-room dirty"       onclick="cycleStatus(this)"><div class="hk-room-number">203</div><div class="hk-room-status">Dirty</div></div>
+          <div class="hk-room in-progress" onclick="cycleStatus(this)"><div class="hk-room-number">204</div><div class="hk-room-status">In Progress</div></div>
+          <div class="hk-room clean"       onclick="cycleStatus(this)"><div class="hk-room-number">205</div><div class="hk-room-status">Clean</div></div>
+          <div class="hk-room clean"       onclick="cycleStatus(this)"><div class="hk-room-number">206</div><div class="hk-room-status">Clean</div></div>
+          <div class="hk-room maintenance" onclick="cycleStatus(this)"><div class="hk-room-number">207</div><div class="hk-room-status">Maintenance</div></div>
+          <div class="hk-room clean"       onclick="cycleStatus(this)"><div class="hk-room-number">208</div><div class="hk-room-status">Clean</div></div>
+        </div>
+      </div>
+
+      <!-- ════════════════ PRICING PANEL ═══════════════════ -->
+      <div class="admin-panel" id="panel-pricing">
+        <div class="flex justify-between items-center mb-lg">
+          <div><div style="font-family:var(--font-display);font-size:1.4rem;color:var(--pearl);">Dynamic Pricing Rules</div><div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.2rem;">Seasonal and weekend multipliers applied at booking</div></div>
+          <button class="btn btn-primary" onclick="openModal('addPricingModal')"><i class="fa-solid fa-plus"></i> Add Rule</button>
+        </div>
+        <div id="pricingList">
+          <div class="pricing-row"><span class="pricing-badge">Weekend</span><span>All room types</span><span>·</span><span>All hotels</span><span style="margin-left:auto;color:var(--gold-bright);font-weight:600;">×1.25</span><button class="btn btn-ghost btn-sm" onclick="deletePricing(this)"><i class="fa-solid fa-trash"></i></button></div>
+          <div class="pricing-row"><span class="pricing-badge">Festival Season</span><span>Deluxe &amp; above</span><span>·</span><span>All hotels</span><span style="margin-left:auto;color:var(--gold-bright);font-weight:600;">×1.50</span><button class="btn btn-ghost btn-sm" onclick="deletePricing(this)"><i class="fa-solid fa-trash"></i></button></div>
+          <div class="pricing-row"><span class="pricing-badge">Off-Peak</span><span>All room types</span><span>·</span><span>Harbour Suites</span><span style="margin-left:auto;color:var(--sage-light);font-weight:600;">×0.85</span><button class="btn btn-ghost btn-sm" onclick="deletePricing(this)"><i class="fa-solid fa-trash"></i></button></div>
+          <div class="pricing-row"><span class="pricing-badge">Summer Peak</span><span>Ocean View</span><span>·</span><span>The Atlas, Goa</span><span style="margin-left:auto;color:var(--gold-bright);font-weight:600;">×1.80</span><button class="btn btn-ghost btn-sm" onclick="deletePricing(this)"><i class="fa-solid fa-trash"></i></button></div>
+          <div class="pricing-row"><span class="pricing-badge">Last Minute</span><span>Standard rooms</span><span>·</span><span>All hotels</span><span style="margin-left:auto;color:var(--sage-light);font-weight:600;">×0.90</span><button class="btn btn-ghost btn-sm" onclick="deletePricing(this)"><i class="fa-solid fa-trash"></i></button></div>
+        </div>
+      </div>
+
+      <!-- ════════════════ REPORTS PANEL ═══════════════════ -->
+      <div class="admin-panel" id="panel-reports">
+        <div style="font-family:var(--font-display);font-size:1.4rem;color:var(--pearl);margin-bottom:0.35rem;">Occupancy &amp; Revenue Reports</div>
+        <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:2rem;">Filter by property and date range. Reports can be exported as PDF.</p>
+
+        <!-- Report filters -->
+        <div class="card" style="margin-bottom:2rem;">
+          <div class="card-body">
+            <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;">
+              <div class="form-group" style="margin:0;flex:1;min-width:160px;">
+                <label class="form-label">Property</label>
+                <select class="form-control form-select">
+                  <option>All Properties</option>
+                  <option>The Meridian Grand</option>
+                  <option>Harbour Suites</option>
+                  <option>The Atlas, Goa</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0;flex:1;min-width:140px;">
+                <label class="form-label">From</label>
+                <input type="date" class="form-control" id="reportFrom" />
+              </div>
+              <div class="form-group" style="margin:0;flex:1;min-width:140px;">
+                <label class="form-label">To</label>
+                <input type="date" class="form-control" id="reportTo" />
+              </div>
+              <button class="btn btn-primary" style="flex-shrink:0;" onclick="runReport()">
+                <i class="fa-solid fa-chart-bar"></i> Generate
+              </button>
+              <button class="btn btn-outline" style="flex-shrink:0;" onclick="showToast('PDF export coming in production','info')">
+                <i class="fa-solid fa-file-pdf"></i> Export PDF
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI row -->
+        <div class="grid-4" style="margin-bottom:2rem;">
+          <div class="stat-card"><div class="stat-value">78%</div><div class="stat-label">Avg occupancy</div><div class="stat-change up mt-sm"><i class="fa-solid fa-arrow-up"></i> +8% YoY</div></div>
+          <div class="stat-card"><div class="stat-value">₹42L</div><div class="stat-label">Total revenue (MTD)</div><div class="stat-change up mt-sm"><i class="fa-solid fa-arrow-up"></i> +14% vs last month</div></div>
+          <div class="stat-card"><div class="stat-value">₹9,400</div><div class="stat-label">RevPAR</div><div class="stat-change up mt-sm"><i class="fa-solid fa-arrow-up"></i> Strong performance</div></div>
+          <div class="stat-card"><div class="stat-value">4.8★</div><div class="stat-label">Avg guest rating</div><div class="stat-change mt-sm" style="color:var(--gold);">Across all properties</div></div>
+        </div>
+
+        <!-- Report charts -->
+        <div class="grid-2" style="gap:1.5rem;">
+          <div class="card">
+            <div class="card-header"><span style="font-family:var(--font-display);color:var(--pearl);">Monthly Occupancy Rate</span></div>
+            <div class="card-body"><div class="chart-wrap"><canvas id="reportOccChart"></canvas></div></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span style="font-family:var(--font-display);color:var(--pearl);">Monthly Revenue (₹ Lakhs)</span></div>
+            <div class="card-body"><div class="chart-wrap"><canvas id="reportRevChart"></canvas></div></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /page-content -->
+  </main>
+</div>
+
+<!-- ═══════════ MODALS ═══════════════════════════════════════ -->
+
+<!-- Add Hotel Modal -->
+<div class="modal-overlay" id="addHotelModal">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header">
+      <div><div class="display-sm" style="font-style:normal;font-size:1.1rem;color:var(--pearl);">Add New Hotel</div></div>
+      <button class="modal-close" onclick="closeModal('addHotelModal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <form onsubmit="saveHotel(event)">
+      <div class="hotel-form-grid">
+        <div class="form-group"><label class="form-label">Hotel Name *</label><input type="text" class="form-control" placeholder="e.g. The Grand Hyatt" required /></div>
+        <div class="form-group"><label class="form-label">City *</label><input type="text" class="form-control" placeholder="e.g. Delhi" required /></div>
+        <div class="form-group"><label class="form-label">Star Rating</label><select class="form-control form-select"><option>3 Stars</option><option>4 Stars</option><option selected>5 Stars</option></select></div>
+        <div class="form-group"><label class="form-label">Total Rooms</label><input type="number" class="form-control" placeholder="e.g. 80" min="1" /></div>
+      </div>
+      <div class="form-group"><label class="form-label">Address</label><input type="text" class="form-control" placeholder="Full hotel address" /></div>
+      <div class="form-group">
+        <label class="form-label">Amenities</label>
+        <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.4rem;">
+          <label class="check-item"><input type="checkbox" checked /> Wi-Fi</label>
+          <label class="check-item"><input type="checkbox" /> Pool</label>
+          <label class="check-item"><input type="checkbox" /> Spa</label>
+          <label class="check-item"><input type="checkbox" /> Gym</label>
+          <label class="check-item"><input type="checkbox" /> Restaurant</label>
+          <label class="check-item"><input type="checkbox" /> Parking</label>
+        </div>
+      </div>
+      <div class="flex gap-sm" style="margin-top:1.5rem;">
+        <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center;">Save Hotel</button>
+        <button type="button" class="btn btn-ghost" onclick="closeModal('addHotelModal')">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Add Room Type Modal -->
+<div class="modal-overlay" id="addRoomTypeModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div><div class="display-sm" style="font-style:normal;font-size:1.1rem;color:var(--pearl);">Add Room Type</div></div>
+      <button class="modal-close" onclick="closeModal('addRoomTypeModal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <form onsubmit="saveRoomType(event)">
+      <div class="form-group"><label class="form-label">Hotel</label><select class="form-control form-select"><option>The Meridian Grand</option><option>Harbour Suites</option><option>The Atlas, Goa</option></select></div>
+      <div class="form-group"><label class="form-label">Room Type Name *</label><input type="text" class="form-control" placeholder="e.g. Deluxe King" required /></div>
+      <div class="hotel-form-grid">
+        <div class="form-group"><label class="form-label">Base Price (₹/night) *</label><input type="number" class="form-control" placeholder="5000" min="0" required /></div>
+        <div class="form-group"><label class="form-label">Total Rooms *</label><input type="number" class="form-control" placeholder="20" min="1" required /></div>
+        <div class="form-group"><label class="form-label">Max Capacity</label><input type="number" class="form-control" placeholder="2" min="1" max="10" /></div>
+        <div class="form-group"><label class="form-label">Size (m²)</label><input type="number" class="form-control" placeholder="35" /></div>
+      </div>
+      <div class="flex gap-sm" style="margin-top:1.5rem;">
+        <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center;">Save Room Type</button>
+        <button type="button" class="btn btn-ghost" onclick="closeModal('addRoomTypeModal')">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Add Pricing Rule Modal -->
+<div class="modal-overlay" id="addPricingModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div><div class="display-sm" style="font-style:normal;font-size:1.1rem;color:var(--pearl);">Add Pricing Rule</div></div>
+      <button class="modal-close" onclick="closeModal('addPricingModal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <form onsubmit="savePricingRule(event)">
+      <div class="form-group"><label class="form-label">Rule Name *</label><input type="text" class="form-control" placeholder="e.g. Weekend Surge" required /></div>
+      <div class="hotel-form-grid">
+        <div class="form-group"><label class="form-label">Applies to</label><select class="form-control form-select"><option>All room types</option><option>Standard only</option><option>Deluxe &amp; above</option><option>Suites only</option></select></div>
+        <div class="form-group"><label class="form-label">Property</label><select class="form-control form-select"><option>All hotels</option><option>The Meridian Grand</option><option>Harbour Suites</option><option>The Atlas, Goa</option></select></div>
+        <div class="form-group"><label class="form-label">Multiplier *</label><input type="number" class="form-control" placeholder="1.25" step="0.05" min="0.5" max="5" required /></div>
+        <div class="form-group"><label class="form-label">Season type</label><select class="form-control form-select"><option>Weekend</option><option>Festival</option><option>Off-peak</option><option>Custom dates</option></select></div>
+      </div>
+      <div class="flex gap-sm" style="margin-top:1.5rem;">
+        <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center;">Save Rule</button>
+        <button type="button" class="btn btn-ghost" onclick="closeModal('addPricingModal')">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Walk-in Modal -->
+<div class="modal-overlay" id="walkinModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div><div class="display-sm" style="font-style:normal;font-size:1.1rem;color:var(--pearl);">Walk-in Booking</div></div>
+      <button class="modal-close" onclick="closeModal('walkinModal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <form onsubmit="saveWalkin(event)">
+      <div class="hotel-form-grid">
+        <div class="form-group"><label class="form-label">Guest Name *</label><input type="text" class="form-control" required /></div>
+        <div class="form-group"><label class="form-label">Phone *</label><input type="tel" class="form-control" required /></div>
+      </div>
+      <div class="hotel-form-grid">
+        <div class="form-group"><label class="form-label">Room Type</label><select class="form-control form-select"><option>Deluxe King</option><option>Standard Double</option><option>Superior Suite</option></select></div>
+        <div class="form-group"><label class="form-label">Nights</label><input type="number" class="form-control" value="1" min="1" /></div>
+      </div>
+      <div class="form-group"><label class="form-label">ID Number</label><input type="text" class="form-control" placeholder="Aadhaar / Passport" /></div>
+      <div class="flex gap-sm" style="margin-top:1.5rem;">
+        <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center;"><i class="fa-solid fa-person-walking-arrow-right"></i> Confirm &amp; Check-in</button>
+        <button type="button" class="btn btn-ghost" onclick="closeModal('walkinModal')">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+<script src="main.js"></script>
+<script>
+/* ── Chart defaults ───────────────────────────────────── */
+Chart.defaults.color = '#7A98B4';
+Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.font.size = 11;
+
+const GOLD  = '#C9A84C';
+const GOLD2 = 'rgba(201,168,76,0.15)';
+const SAGE  = '#3D7A58';
+const SAGE2 = 'rgba(61,122,88,0.15)';
+
+function makeChart(id, type, labels, datasets, extra = {}) {
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  return new Chart(ctx, {
+    type,
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1C3454', borderColor: 'rgba(201,168,76,0.3)', borderWidth: 1, padding: 10 } },
+      scales: type !== 'doughnut' ? {
+        x: { grid: { color: 'rgba(201,168,76,0.06)' }, border: { color: 'transparent' } },
+        y: { grid: { color: 'rgba(201,168,76,0.06)' }, border: { color: 'transparent' }, ...extra.yScale },
+      } : {},
+      ...extra,
+    },
+  });
+}
+
+const months30 = Array.from({length:30},(_,i)=>`Sep ${i+1}`);
+const occ30    = months30.map(()=> Math.round(60+Math.random()*30));
+
+makeChart('occupancyChart','line', months30, [{
+  data: occ30, borderColor: GOLD, backgroundColor: GOLD2,
+  tension: 0.4, fill: true, pointRadius: 0, pointHoverRadius: 4, borderWidth: 2,
+}], { yScale: { min: 0, max: 100, ticks: { callback: v => v+'%' } } });
+
+makeChart('revenueChart','bar', ['Meridian','Harbour Suites','Atlas Goa'], [
+  { label:'This month', data:[18.4,12.2,11.8], backgroundColor: GOLD, borderRadius: 4 },
+  { label:'Last month', data:[16.1,10.5, 9.2], backgroundColor: SAGE, borderRadius: 4 },
+]);
+
+const doughnut = new Chart(document.getElementById('statusChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Confirmed','Checked-in','Reserved','Completed','Cancelled'],
+    datasets: [{ data:[5,4,2,2,1], backgroundColor:['#3D7A58','#5EA8D4','#C9A84C','#5A7A99','#B84037'], borderColor:'#0D1D30', borderWidth:3, hoverOffset:6 }],
+  },
+  options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:true, position:'right', labels:{ color:'#7A98B4', padding:12, font:{size:11} } } } },
+});
+
+const months12 = ['Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep'];
+makeChart('reportOccChart','line',months12,[{
+  data:[62,58,74,70,68,75,80,76,72,78,82,78], borderColor:GOLD, backgroundColor:GOLD2, tension:0.4, fill:true, pointRadius:3, borderWidth:2,
+}], { yScale:{min:0,max:100,ticks:{callback:v=>v+'%'}} });
+
+makeChart('reportRevChart','bar',months12,[
+  { label:'Revenue (L)',data:[28,24,38,35,32,40,42,39,36,41,44,42], backgroundColor:GOLD, borderRadius:4 },
+  { label:'Target (L)',  data:[32,32,36,36,36,38,38,40,40,40,42,42], backgroundColor:SAGE, borderRadius:4 },
+]);
+
+/* ── Panel navigation ─────────────────────────────────── */
+const panelMeta = {
+  dashboard:   ['Dashboard',    'Overview of all properties'],
+  hotels:      ['Hotels',       'Manage hotel properties'],
+  rooms:       ['Rooms & Types','Room inventory and pricing'],
+  bookings:    ['Bookings',     'View and manage all reservations'],
+  checkinout:  ['Check-in / Out','Process guest arrivals and departures'],
+  housekeeping:['Housekeeping', 'Room cleanliness status board'],
+  pricing:     ['Pricing Rules','Dynamic pricing multipliers'],
+  reports:     ['Reports',      'Occupancy and revenue analytics'],
+};
+
+function showPanel(name, linkEl) {
+  document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
+  const panel = document.getElementById('panel-' + name);
+  if (panel) panel.classList.add('active');
+  document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+  if (linkEl) linkEl.classList.add('active');
+  const meta = panelMeta[name] || [name,''];
+  document.getElementById('pageTitle').textContent    = meta[0];
+  document.getElementById('pageSubtitle').textContent = meta[1];
+  window.scrollTo(0,0);
+}
+
+/* ── Housekeeping cycle ───────────────────────────────── */
+const statuses = ['clean','dirty','in-progress','maintenance'];
+const statusLabels = { clean:'Clean', dirty:'Dirty', 'in-progress':'In Progress', maintenance:'Maintenance' };
+
+function cycleStatus(el) {
+  const cur  = statuses.find(s => el.classList.contains(s)) || 'clean';
+  const next = statuses[(statuses.indexOf(cur) + 1) % statuses.length];
+  el.classList.remove(...statuses);
+  el.classList.add(next);
+  el.querySelector('.hk-room-status').textContent = statusLabels[next];
+  const room = el.querySelector('.hk-room-number').textContent;
+  showToast(`Room ${room} → ${statusLabels[next]}`, 'info');
+}
+
+/* ── Operations ───────────────────────────────────────── */
+function doCheckin(id) {
+  showToast(`Check-in recorded for ${id} at ${new Date().toLocaleTimeString()}`, 'success');
+}
+function doCheckout(id) {
+  showToast(`Check-out recorded for ${id} at ${new Date().toLocaleTimeString()}`, 'success');
+}
+function confirmBooking(id, btn) {
+  btn.textContent = 'Confirmed ✓';
+  btn.disabled = true;
+  showToast(`Booking ${id} confirmed`, 'success');
+}
+function filterBookings(status) {
+  showToast(status ? `Filtered: ${status}` : 'Showing all bookings', 'info');
+}
+function editHotel(name) { openModal('addHotelModal'); showToast(`Edit mode: ${name}`, 'info'); }
+function editRoomType() { openModal('addRoomTypeModal'); }
+function confirmDelete(type) { if (confirm(`Delete this ${type}?`)) showToast(`${type} deleted`, 'success'); }
+function showBookingDetail(id) { showToast(`Booking detail modal: ${id}`, 'info'); }
+function deletePricing(btn) { btn.closest('.pricing-row').remove(); showToast('Pricing rule removed','success'); }
+
+/* ── Form saves (demo) ────────────────────────────────── */
+function saveHotel(e)       { e.preventDefault(); closeModal('addHotelModal');    showToast('Hotel saved successfully','success'); }
+function saveRoomType(e)    { e.preventDefault(); closeModal('addRoomTypeModal'); showToast('Room type saved','success'); }
+function savePricingRule(e) { e.preventDefault(); closeModal('addPricingModal');  showToast('Pricing rule added','success'); }
+function saveWalkin(e)      { e.preventDefault(); closeModal('walkinModal');      showToast('Walk-in booking confirmed & checked in','success'); }
+function runReport()        { showToast('Report generated for selected period','success'); }
+
+/* ── Set default report dates ─────────────────────────── */
+const now = new Date();
+const from = new Date(now); from.setDate(1);
+document.getElementById('reportFrom').value = from.toISOString().split('T')[0];
+document.getElementById('reportTo').value   = now.toISOString().split('T')[0];
+</script>
+</body>
+</html>
