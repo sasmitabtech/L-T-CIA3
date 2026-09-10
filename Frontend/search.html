@@ -175,7 +175,7 @@
           <div class="search-divider"></div>
           <div class="search-field" style="max-width:80px;">
             <label><i class="fa-solid fa-user"></i> Guests</label>
-            <input type="number" id="qGuests" value="2" min="1" max="10" />
+            <input type="number" id="qGuests" min="1" max="100" placeholder="Guests" required />
           </div>
           <button class="btn btn-primary" onclick="runSearch()" style="border-radius:var(--radius-xl);flex-shrink:0;">
             <i class="fa-solid fa-magnifying-glass"></i>
@@ -522,7 +522,9 @@
   </div>
 
   <div class="toast-container" id="toastContainer"></div>
+  <script src="api.js"></script>
   <script src="main.js"></script>
+  <script src="live.js"></script>
   <script>
     // Read URL params
     const params = new URLSearchParams(window.location.search);
@@ -539,13 +541,8 @@
       document.getElementById('searchMeta').textContent = meta;
     }
 
-    // Set default dates
-    if (!document.getElementById('qIn').value) {
-      const t = new Date(); t.setDate(t.getDate()+1);
-      const d = new Date(); d.setDate(d.getDate()+4);
-      document.getElementById('qIn').value  = t.toISOString().split('T')[0];
-      document.getElementById('qOut').value = d.toISOString().split('T')[0];
-    }
+    document.getElementById('qIn').min = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+    document.getElementById('qOut').min = new Date(Date.now() + 172800000).toISOString().split('T')[0];
 
     function runSearch() {
       const city = document.getElementById('qCity').value;

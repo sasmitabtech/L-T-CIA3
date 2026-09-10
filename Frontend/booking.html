@@ -581,31 +581,21 @@
 </div>
 
 <div class="toast-container" id="toastContainer"></div>
+<script src="api.js"></script>
 <script src="main.js"></script>
+<script src="live.js"></script>
 <script>
   // ── State ─────────────────────────────────────────────
   const params   = new URLSearchParams(window.location.search);
-  const HOTEL_MAP = {
-    meridian: 'The Meridian Grand',
-    harbour:  'Harbour Suites Bengaluru',
-    atlas:    'The Atlas, Goa',
-  };
-  const ROOM_MAP = {
-    standard: { name: 'Standard Double', price: 5200 },
-    deluxe:   { name: 'Deluxe King',     price: 8200 },
-    suite:    { name: 'Superior Suite',  price: 14500 },
-    ocean:    { name: 'Ocean View Room', price: 11800 },
-  };
-
-  const hotel    = params.get('hotel') || 'meridian';
-  const type     = params.get('type')  || 'deluxe';
+  const hotelId  = params.get('hotelId');
+  const roomTypeId = params.get('roomTypeId');
   const checkIn  = params.get('checkIn')  || '';
   const checkOut = params.get('checkOut') || '';
-  const guests   = params.get('guests')   || 2;
+  const guests   = positiveInteger(params.get('guests')) || 1;
 
-  const hotelName = HOTEL_MAP[hotel] || 'The Meridian Grand';
-  const roomInfo  = ROOM_MAP[type]   || ROOM_MAP.deluxe;
-  const nights    = checkIn && checkOut ? Math.max(1, Math.round((new Date(checkOut)-new Date(checkIn))/(86400000))) : 3;
+  let hotelName = 'Loading hotel...';
+  let roomInfo = { name: 'Loading room...', price: 0 };
+  const nights = checkIn && checkOut ? nightsBetween(checkIn, checkOut) : 0;
 
   let addonTotal = 0;
   let currentStep = 1;
@@ -648,7 +638,26 @@
     }
   }
 
+  async function loadBookingDetails() {
+    if (!hotelId || !roomTypeId || !isValidDateRange(checkIn, checkOut)) {
+      showToast('This booking link is incomplete or expired. Return to search and choose new dates.', 'error');
+      return;
+    }
+    try {
+      const [hotelResponse, roomResponse] = await Promise.all([API.getHotel(hotelId), API.getRoomType(roomTypeId)]);
+      const hotel = roomResponse.data?.hotelId || hotelResponse.data;
+      const room = Array.isArray(roomResponse.data) ? roomResponse.data.find((item) => item._id === roomTypeId) : roomResponse.data;
+      if (!hotel || !room || String(room.hotelId?._id || room.hotelId) !== String(hotelId)) throw new Error('Hotel or room type not found');
+      hotelName = cleanText(hotel.name);
+      roomInfo = { name: cleanText(room.name), price: positiveNumber(room.basePrice, 0) || 0 };
+      updateSummary();
+    } catch (error) {
+      showToast(error.message || 'Unable to load the selected room.', 'error');
+    }
+  }
+
   updateSummary();
+  loadBookingDetails();
 
   function toggleAddon(el, key, price) {
     const wasSelected = el.classList.contains('selected');
@@ -689,34 +698,9 @@
     const email = document.getElementById('gEmail').value.trim();
     const phone = document.getElementById('gPhone').value.trim();
     const policy = document.getElementById('policyCheck').checked;
-    if (!first || !last || !email || !phone) { showToast('Please fill in all required fields', 'error'); return; }
+    if (!first || !last || !isValidEmail(email) || !/^\+?[0-9 ()-]{7,20}$/.test(phone)) { showToast('Enter a valid name, email, and phone number.', 'error'); return; }
     if (!policy) { showToast('Please agree to the cancellation policy', 'error'); return; }
     goStep(3);
-  }
-
-  async function processPayment() {
-    const btn  = document.getElementById('payBtn');
-    const text = document.getElementById('payBtnText');
-    const spin = document.getElementById('payLoader');
-    btn.disabled = true; text.style.display = 'none'; spin.style.display = '';
-
-    await new Promise(r => setTimeout(r, 2000));
-
-    // Populate confirmation
-    const { total } = calcTotals();
-    const ref = 'BKG-' + new Date().getFullYear() + '-' + Math.floor(1000 + Math.random() * 9000);
-    document.getElementById('bookingRef').textContent    = ref;
-    document.getElementById('confEmail').textContent     = document.getElementById('gEmail').value || 'your email';
-    document.getElementById('conf-hotel').textContent   = hotelName;
-    document.getElementById('conf-room').textContent    = roomInfo.name;
-    document.getElementById('conf-ci').textContent      = checkIn  || '—';
-    document.getElementById('conf-co').textContent      = checkOut || '—';
-    document.getElementById('conf-guests').textContent  = `${guests} guest(s)`;
-    document.getElementById('conf-total').textContent   = `₹${total.toLocaleString()}`;
-
-    btn.disabled = false; text.style.display = ''; spin.style.display = 'none';
-    showToast('Payment successful!', 'success');
-    goStep(4);
   }
 
   function setPayMethod(btn, method) {

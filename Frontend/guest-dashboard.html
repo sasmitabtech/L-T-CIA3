@@ -80,28 +80,16 @@
 
     <nav class="sidebar-nav">
       <div class="sidebar-section-label">My Account</div>
-      <a href="guest-dashboard.html" class="sidebar-link active">
-        <span class="sidebar-icon"><i class="fa-solid fa-gauge"></i></span> Dashboard
+      <a href="#history" class="sidebar-link nav-link active" data-nav-target="guest-history" data-roles="guest" onclick="scrollToSection('history')">
+        <span class="sidebar-icon"><i class="fa-solid fa-calendar-check"></i></span> My Bookings
       </a>
-      <a href="search.html" class="sidebar-link">
+      <a href="search.html" class="sidebar-link nav-link" data-nav-target="search" data-roles="guest">
         <span class="sidebar-icon"><i class="fa-solid fa-magnifying-glass"></i></span> Search Hotels
       </a>
 
-      <div class="sidebar-section-label">Bookings</div>
-      <a href="#upcoming" class="sidebar-link" onclick="scrollToSection('upcoming')">
-        <span class="sidebar-icon"><i class="fa-solid fa-calendar-check"></i></span> Upcoming
-        <span class="sidebar-badge" id="upcomingCount">2</span>
-      </a>
-      <a href="#history" class="sidebar-link" onclick="scrollToSection('history')">
-        <span class="sidebar-icon"><i class="fa-solid fa-clock-rotate-left"></i></span> History
-      </a>
-
       <div class="sidebar-section-label">Account</div>
-      <a href="#profile" class="sidebar-link">
+      <a href="#profile" class="sidebar-link nav-link" data-nav-target="profile" data-roles="guest">
         <span class="sidebar-icon"><i class="fa-regular fa-user"></i></span> Profile
-      </a>
-      <a href="#" class="sidebar-link" onclick="showToast('Preferences saved','info')">
-        <span class="sidebar-icon"><i class="fa-solid fa-sliders"></i></span> Preferences
       </a>
     </nav>
 
@@ -348,6 +336,7 @@
             </tbody>
           </table>
         </div>
+        <pre data-module-output="guest-history" class="sr-only" aria-live="polite"></pre>
       </section>
 
     </div>
@@ -398,10 +387,13 @@
 </div>
 
 <div class="toast-container" id="toastContainer"></div>
+<script src="api.js"></script>
 <script src="main.js"></script>
+<script src="live.js"></script>
 <script>
   // Populate user info
-  const user = getUser() || { name: 'Priya Anand', role: 'guest' };
+  const user = requireAuth();
+  if (!user) throw new Error('Authentication required');
   const first = (user.name || 'Guest').split(' ')[0];
   ['welcomeName','headerUserName'].forEach(id => {
     const el = document.getElementById(id); if(el) el.textContent = first;

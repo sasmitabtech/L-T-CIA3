@@ -317,16 +317,6 @@
           </button>
         </form>
 
-        <!-- Demo role links -->
-        <div class="divider-or">Try a demo account</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
-          <button class="btn btn-ghost btn-sm" style="justify-content:center;" onclick="fillDemo('guest')">
-            <i class="fa-solid fa-user"></i> Guest Demo
-          </button>
-          <button class="btn btn-ghost btn-sm" style="justify-content:center;" onclick="fillDemo('admin')">
-            <i class="fa-solid fa-shield-halved"></i> Admin Demo
-          </button>
-        </div>
       </div>
 
       <!-- ── Register Form ─────────────────────────────────── -->
@@ -399,7 +389,9 @@
 
 <div class="toast-container" id="toastContainer"></div>
 
+<script src="api.js"></script>
 <script src="main.js"></script>
+<script src="live.js"></script>
 <script>
   let selectedRole = 'guest';
 
@@ -431,12 +423,6 @@
     document.getElementById('roleStaff').classList.toggle('selected', role === 'staff');
   }
 
-  function fillDemo(role) {
-    document.getElementById('loginEmail').value    = role === 'admin' ? 'admin@velour.com' : 'guest@velour.com';
-    document.getElementById('loginPassword').value = 'demo12345';
-    showToast(`Demo ${role} credentials filled`, 'info');
-  }
-
   async function handleLogin(e) {
     e.preventDefault();
     const email    = document.getElementById('loginEmail').value.trim();
@@ -449,14 +435,11 @@
     btn.disabled = true; text.style.display = 'none'; spin.style.display = '';
 
     try {
-      // Demo mode: simulate API response
-      await new Promise(r => setTimeout(r, 900));
-      const role = email.includes('admin') ? 'admin' : email.includes('staff') ? 'staff' : 'guest';
-      const user = { _id: 'u001', name: role === 'admin' ? 'Admin User' : 'Priya Anand', email, role };
-      saveAuth('demo_jwt_token_' + Date.now(), user);
+      const result = await API.login({ email, password });
+      saveAuth(result.data.token, result.data.user);
       showToast('Welcome back!', 'success');
       setTimeout(() => {
-        window.location.href = role === 'admin' ? 'admin/dashboard.html' : 'guest-dashboard.html';
+        window.location.href = result.data.user.role === 'admin' ? '/admin/dashboard' : '/dashboard';
       }, 600);
     } catch(err) {
       btn.disabled = false; text.style.display = ''; spin.style.display = 'none';
@@ -477,9 +460,8 @@
     btn.disabled = true; text.style.display = 'none'; spin.style.display = '';
 
     try {
-      await new Promise(r => setTimeout(r, 900));
-      const user = { _id: 'u_new', name, email, role: selectedRole };
-      saveAuth('demo_jwt_' + Date.now(), user);
+      const result = await API.register({ name, email, password, role: selectedRole });
+      saveAuth(result.data.token, result.data.user);
       showToast('Account created successfully!', 'success');
       setTimeout(() => { window.location.href = 'guest-dashboard.html'; }, 600);
     } catch(err) {

@@ -409,7 +409,7 @@
             <div class="search-divider"></div>
             <div class="search-field">
               <label><i class="fa-solid fa-user"></i> Guests</label>
-              <input type="number" id="guests" placeholder="2 adults" min="1" max="10" value="2" />
+              <input type="number" id="guests" placeholder="Number of guests" min="1" max="100" required />
             </div>
             <button class="btn btn-primary btn-lg" onclick="doSearch()" style="flex-shrink:0;border-radius:var(--radius-xl);">
               <i class="fa-solid fa-magnifying-glass"></i> Search
@@ -494,7 +494,7 @@
         <p class="mt" style="margin-bottom:3rem;">Carefully chosen for their design, service, and that hard-to-define feeling of being exactly right.</p>
       </div>
 
-      <div class="hotels-grid">
+      <div class="hotels-grid" id="featuredHotels">
 
         <div class="hotel-card" data-aos="fade-up" data-aos-delay="0">
           <div class="hotel-card-img">
@@ -757,7 +757,9 @@
   <div class="toast-container" id="toastContainer"></div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+  <script src="api.js"></script>
   <script src="main.js"></script>
+  <script src="live.js"></script>
   <script>
     // ── Hero particle canvas ─────────────────────────────
     const canvas = document.getElementById('hero-canvas');
@@ -834,16 +836,24 @@
       const city   = document.getElementById('searchCity').value;
       const checkIn  = document.getElementById('checkIn').value;
       const checkOut = document.getElementById('checkOut').value;
-      const guests   = document.getElementById('guests').value;
+      const guests   = positiveInteger(document.getElementById('guests').value);
+      if (!isValidDateRange(checkIn, checkOut) || !guests) return showToast('Choose future dates and a positive guest count.', 'error');
       window.location.href = `search.html?city=${encodeURIComponent(city)}&checkIn=${checkIn}&checkOut=${checkOut}&guests=${guests}`;
     }
 
-    // Set default dates
-    const today = new Date();
-    const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
-    const dayAfter = new Date(today); dayAfter.setDate(dayAfter.getDate() + 3);
-    document.getElementById('checkIn').value  = tomorrow.toISOString().split('T')[0];
-    document.getElementById('checkOut').value = dayAfter.toISOString().split('T')[0];
+    document.getElementById('checkIn').min = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+    document.getElementById('checkOut').min = new Date(Date.now() + 172800000).toISOString().split('T')[0];
+    document.addEventListener('DOMContentLoaded', async () => {
+      const target = document.getElementById('featuredHotels');
+      if (!target) return;
+      try {
+        const response = await API.getAllHotels();
+        const hotels = response.data || [];
+        target.innerHTML = hotels.length ? hotels.slice(0, 6).map((hotel) => `<article class="hotel-card"><div class="hotel-card-body"><div class="hotel-card-name">${escapeHTML(hotel.name)}</div><div class="hotel-card-location"><i class="fa-solid fa-location-dot"></i> ${escapeHTML(hotel.city)}</div><div class="hotel-card-footer"><span class="badge badge-green">${Number(hotel.rating) || 0} stars</span><a href="search.html?city=${encodeURIComponent(hotel.city)}" class="btn btn-outline btn-sm">View Rooms</a></div></div></article>`).join('') : '<div class="empty-state"><p>No hotels are available yet.</p></div>';
+      } catch (error) {
+        target.innerHTML = '<div class="empty-state"><p>Hotels are temporarily unavailable.</p></div>';
+      }
+    });
   </script>
 </body>
 </html>

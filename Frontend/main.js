@@ -40,13 +40,34 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Active nav link highlight
+  // Active nav link highlight and role-based module visibility
   const currentPath = window.location.pathname.split('/').pop();
+  const userRole = String(getUser()?.role || 'guest').toLowerCase();
   document.querySelectorAll('.nav-links a, .sidebar-link').forEach(link => {
     const href = link.getAttribute('href') || '';
     if (href === currentPath || (currentPath === '' && href === 'index.html')) {
       link.classList.add('active');
     }
+    const allowedRoles = (link.dataset.roles || '').toLowerCase().split(/\s+/).filter(Boolean);
+    if (allowedRoles.length && !allowedRoles.includes(userRole)) {
+      link.hidden = true;
+      link.setAttribute('aria-hidden', 'true');
+    }
+  });
+
+  document.querySelectorAll('[data-module-panel]').forEach(panel => {
+    const allowedRoles = (panel.dataset.roles || '').toLowerCase().split(/\s+/).filter(Boolean);
+    if (allowedRoles.length && !allowedRoles.includes(userRole)) panel.hidden = true;
+  });
+
+  document.querySelectorAll('[data-nav-target]').forEach(link => {
+    link.addEventListener('click', event => {
+      const target = link.dataset.navTarget;
+      if (!target || link.getAttribute('href') !== '#') return;
+      event.preventDefault();
+      if (typeof window.showPanel === 'function') window.showPanel(target, link);
+      loadModuleData(target);
+    });
   });
 
   // Tab system
@@ -72,6 +93,32 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+async function loadModuleData(moduleName) {
+  const user = getUser();
+  try {
+    if (moduleName === 'guest-history' && (user?.id || user?._id) && window.API?.getGuestBookings) {
+      const result = await API.getGuestBookings(user.id || user._id);
+      const target = document.querySelector('[data-module-output="guest-history"]');
+      if (target) target.textContent = JSON.stringify(result.data || [], null, 2);
+    }
+    if (moduleName === 'reports' && window.API?.getOccupancyReport) {
+      const from = document.getElementById('reportFrom')?.value || '';
+      const to = document.getElementById('reportTo')?.value || '';
+      const result = await API.getOccupancyReport({ hotelId: '', from, to });
+      const target = document.querySelector('[data-module-output="reports"]');
+      if (target) target.textContent = JSON.stringify(result.data || [], null, 2);
+    }
+    if (moduleName === 'hotels' && window.API?.getAllHotels) await API.getAllHotels();
+    if (moduleName === 'rooms' && window.API?.getAllRoomTypes) await API.getAllRoomTypes();
+    if (moduleName === 'housekeeping' && window.API?.getHousekeepingStatus) {
+      const hotelId = document.querySelector('[data-hotel-id]')?.dataset.hotelId;
+      if (hotelId) await API.getHousekeepingStatus(hotelId);
+    }
+  } catch (error) {
+    console.error(`Failed to load ${moduleName}:`, error);
+  }
+}
+
 // ── Toast ─────────────────────────────────────────────────
 function showToast(message, type = 'info', duration = 3500) {
   const container = document.getElementById('toastContainer');
@@ -80,12 +127,18 @@ function showToast(message, type = 'info', duration = 3500) {
   const icons = { success: 'fa-circle-check', error: 'fa-circle-xmark', info: 'fa-circle-info' };
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
-  toast.innerHTML = `
-    <i class="fa-solid ${icons[type] || icons.info}" style="color:var(--gold);"></i>
-    <span>${message}</span>
-    <button onclick="this.parentElement.remove()" style="margin-left:auto;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.9rem;">
-      <i class="fa-solid fa-xmark"></i>
-    </button>`;
+  const icon = document.createElement('i');
+  icon.className = `fa-solid ${icons[type] || icons.info}`;
+  icon.style.color = 'var(--gold)';
+  const text = document.createElement('span');
+  text.textContent = String(message || 'Something went wrong.');
+  const close = document.createElement('button');
+  close.type = 'button';
+  close.setAttribute('aria-label', 'Dismiss notification');
+  close.style.cssText = 'margin-left:auto;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.9rem;';
+  close.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+  close.addEventListener('click', () => toast.remove());
+  toast.append(icon, text, close);
   container.appendChild(toast);
   setTimeout(() => {
     toast.style.animation = 'toastIn 0.3s reverse forwards';
@@ -109,11 +162,24 @@ async function apiRequest(method, endpoint, body = null) {
 
   try {
     const res = await fetch(`${API_BASE}${endpoint}`, opts);
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Request failed');
+    const contentType = res.headers.get('content-type') || '';
+    const data = contentType.includes('application/json') ? await res.json() : {};
+    if (!res.ok) {
+      const statusMessages = {
+        403: 'Access Denied: You do not have permission to execute this action.',
+        429: 'Too many requests. Please wait a few minutes before trying again.',
+      };
+      if (res.status === 401) {
+        clearAuth();
+        if (!window.location.pathname.endsWith('login.html')) window.location.href = 'login.html';
+      }
+      const error = new Error(statusMessages[res.status] || data.message || 'Request failed');
+      error.status = res.status;
+      error.errorCode = data.errorCode;
+      throw error;
+    }
     return data;
   } catch (err) {
-    showToast(err.message, 'error');
     throw err;
   }
 }
@@ -149,10 +215,29 @@ function requireAuth(role = null) {
   return user;
 }
 
+function postAuthRedirect(user) {
+  if (user && (user.role === 'admin' || user.role === 'staff')) {
+    window.location.href = 'dashboard.html';
+  } else {
+    window.location.href = 'guest-dashboard.html';
+  }
+}
+
+function requireStaff() {
+  const user = requireAuth();
+  if (!user) return null;
+  if (user.role !== 'admin' && user.role !== 'staff') {
+    showToast('Staff or admin access required', 'error');
+    window.location.href = 'guest-dashboard.html';
+    return null;
+  }
+  return user;
+}
+
 function logout() {
   clearAuth();
   showToast('Signed out successfully', 'success');
-  setTimeout(() => window.location.href = 'index.html', 800);
+  setTimeout(() => { window.location.href = 'index.html'; }, 300);
 }
 
 // ── Modal Helpers ─────────────────────────────────────────
@@ -196,6 +281,39 @@ function validateForm(formEl) {
   return valid;
 }
 
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i.test(String(value || '').trim());
+}
+
+function isValidDateRange(checkIn, checkOut, allowToday = false) {
+  const start = new Date(`${checkIn}T00:00:00`);
+  const end = new Date(`${checkOut}T00:00:00`);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Boolean(checkIn && checkOut && !Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime()) &&
+    (allowToday ? start >= today : start > today) && end > start);
+}
+
+function cleanText(value, maxLength = 200) {
+  return String(value || '').replace(/[<>]/g, '').trim().slice(0, maxLength);
+}
+
+function escapeHTML(value) {
+  const element = document.createElement('span');
+  element.textContent = String(value ?? '');
+  return element.innerHTML;
+}
+
+function positiveInteger(value) {
+  const number = Number(value);
+  return Number.isInteger(number) && number > 0 ? number : null;
+}
+
+function positiveNumber(value, minimum = 0) {
+  const number = Number(value);
+  return Number.isFinite(number) && number >= minimum ? number : null;
+}
+
 // ── Sidebar user info ─────────────────────────────────────
 function populateSidebarUser() {
   const user = getUser();
@@ -229,8 +347,16 @@ window.getUser     = getUser;
 window.getToken    = getToken;
 window.clearAuth   = clearAuth;
 window.requireAuth = requireAuth;
+window.requireStaff = requireStaff;
+window.postAuthRedirect = postAuthRedirect;
 window.logout      = logout;
 window.openModal   = openModal;
 window.closeModal  = closeModal;
 window.formatDate  = formatDate;
 window.nightsBetween = nightsBetween;
+window.isValidEmail = isValidEmail;
+window.isValidDateRange = isValidDateRange;
+window.cleanText = cleanText;
+window.positiveInteger = positiveInteger;
+window.positiveNumber = positiveNumber;
+window.escapeHTML = escapeHTML;

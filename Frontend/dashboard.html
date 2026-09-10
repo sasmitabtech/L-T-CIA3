@@ -84,36 +84,36 @@
 
     <nav class="sidebar-nav">
       <div class="sidebar-section-label">Overview</div>
-      <a href="#" class="sidebar-link active" onclick="showPanel('dashboard',this)">
+      <a href="#" class="sidebar-link nav-link active" data-nav-target="dashboard" data-roles="admin staff" onclick="showPanel('dashboard',this)">
         <span class="sidebar-icon"><i class="fa-solid fa-gauge-high"></i></span> Dashboard
       </a>
 
       <div class="sidebar-section-label">Properties</div>
-      <a href="#" class="sidebar-link" onclick="showPanel('hotels',this)">
+      <a href="#" class="sidebar-link nav-link" data-nav-target="hotels" data-roles="admin" onclick="showPanel('hotels',this)">
         <span class="sidebar-icon"><i class="fa-solid fa-building"></i></span> Hotels
       </a>
-      <a href="#" class="sidebar-link" onclick="showPanel('rooms',this)">
+      <a href="#" class="sidebar-link nav-link" data-nav-target="rooms" data-roles="admin" onclick="showPanel('rooms',this)">
         <span class="sidebar-icon"><i class="fa-solid fa-door-open"></i></span> Rooms &amp; Types
       </a>
-      <a href="#" class="sidebar-link" onclick="showPanel('pricing',this)">
+      <a href="#" class="sidebar-link nav-link" data-nav-target="pricing" data-roles="admin" onclick="showPanel('pricing',this)">
         <span class="sidebar-icon"><i class="fa-solid fa-tags"></i></span> Pricing Rules
       </a>
 
       <div class="sidebar-section-label">Operations</div>
-      <a href="#" class="sidebar-link" onclick="showPanel('bookings',this)">
+      <a href="#" class="sidebar-link nav-link" data-nav-target="bookings" data-roles="admin staff" onclick="showPanel('bookings',this)">
         <span class="sidebar-icon"><i class="fa-solid fa-calendar-days"></i></span> Bookings
         <span class="sidebar-badge">14</span>
       </a>
-      <a href="#" class="sidebar-link" onclick="showPanel('checkinout',this)">
+      <a href="#" class="sidebar-link nav-link" data-nav-target="checkinout" data-roles="staff admin" onclick="showPanel('checkinout',this)">
         <span class="sidebar-icon"><i class="fa-solid fa-person-walking-arrow-right"></i></span> Check-in / Out
         <span class="sidebar-badge">3</span>
       </a>
-      <a href="#" class="sidebar-link" onclick="showPanel('housekeeping',this)">
+      <a href="#" class="sidebar-link nav-link" data-nav-target="housekeeping" data-roles="staff admin" onclick="showPanel('housekeeping',this)">
         <span class="sidebar-icon"><i class="fa-solid fa-broom"></i></span> Housekeeping
       </a>
 
       <div class="sidebar-section-label">Analytics</div>
-      <a href="#" class="sidebar-link" onclick="showPanel('reports',this)">
+      <a href="#" class="sidebar-link nav-link" data-nav-target="reports" data-roles="admin" onclick="showPanel('reports',this)">
         <span class="sidebar-icon"><i class="fa-solid fa-chart-line"></i></span> Reports
       </a>
     </nav>
@@ -555,7 +555,7 @@
       </div>
 
       <!-- ════════════════ REPORTS PANEL ═══════════════════ -->
-      <div class="admin-panel" id="panel-reports">
+      <div class="admin-panel tab-pane" id="panel-reports" data-module-panel="reports" data-roles="admin">
         <div style="font-family:var(--font-display);font-size:1.4rem;color:var(--pearl);margin-bottom:0.35rem;">Occupancy &amp; Revenue Reports</div>
         <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:2rem;">Filter by property and date range. Reports can be exported as PDF.</p>
 
@@ -609,6 +609,7 @@
             <div class="card-body"><div class="chart-wrap"><canvas id="reportRevChart"></canvas></div></div>
           </div>
         </div>
+        <pre data-module-output="reports" aria-live="polite" style="margin-top:1rem;white-space:pre-wrap;color:var(--text-muted);font-size:0.78rem;"></pre>
       </div>
 
     </div><!-- /page-content -->
@@ -689,6 +690,8 @@
         <div class="form-group"><label class="form-label">Property</label><select class="form-control form-select"><option>All hotels</option><option>The Meridian Grand</option><option>Harbour Suites</option><option>The Atlas, Goa</option></select></div>
         <div class="form-group"><label class="form-label">Multiplier *</label><input type="number" class="form-control" placeholder="1.25" step="0.05" min="0.5" max="5" required /></div>
         <div class="form-group"><label class="form-label">Season type</label><select class="form-control form-select"><option>Weekend</option><option>Festival</option><option>Off-peak</option><option>Custom dates</option></select></div>
+        <div class="form-group"><label class="form-label">Start date</label><input type="date" class="form-control" /></div>
+        <div class="form-group"><label class="form-label">End date</label><input type="date" class="form-control" /></div>
       </div>
       <div class="flex gap-sm" style="margin-top:1.5rem;">
         <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center;">Save Rule</button>
@@ -724,7 +727,9 @@
 </div>
 
 <div class="toast-container" id="toastContainer"></div>
+<script src="api.js"></script>
 <script src="main.js"></script>
+<script src="live.js"></script>
 <script>
 /* ── Chart defaults ───────────────────────────────────── */
 Chart.defaults.color = '#7A98B4';
@@ -850,7 +855,7 @@ function saveHotel(e)       { e.preventDefault(); closeModal('addHotelModal');  
 function saveRoomType(e)    { e.preventDefault(); closeModal('addRoomTypeModal'); showToast('Room type saved','success'); }
 function savePricingRule(e) { e.preventDefault(); closeModal('addPricingModal');  showToast('Pricing rule added','success'); }
 function saveWalkin(e)      { e.preventDefault(); closeModal('walkinModal');      showToast('Walk-in booking confirmed & checked in','success'); }
-function runReport()        { showToast('Report generated for selected period','success'); }
+async function runReport()  { await loadModuleData('reports'); showToast('Report generated for selected period','success'); }
 
 /* ── Set default report dates ─────────────────────────── */
 const now = new Date();

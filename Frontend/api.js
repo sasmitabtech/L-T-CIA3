@@ -13,7 +13,7 @@ const API = {
 
   /* ── HOTELS ───────────────────────────────────────────── */
   searchHotels: ({ city, checkIn, checkOut, guests }) =>
-    apiRequest('GET', `/hotels/search?city=${city}&checkIn=${checkIn}&checkOut=${checkOut}&guests=${guests}`),
+    apiRequest('GET', `/hotels/search?city=${encodeURIComponent(city || '')}&checkIn=${encodeURIComponent(checkIn || '')}&checkOut=${encodeURIComponent(checkOut || '')}&guests=${encodeURIComponent(guests || 1)}`),
 
   getAllHotels: () =>
     apiRequest('GET', '/hotels'),
@@ -31,6 +31,12 @@ const API = {
     apiRequest('DELETE', `/hotels/${id}`),
 
   /* ── ROOM TYPES ───────────────────────────────────────── */
+  getAllRoomTypes: () =>
+    apiRequest('GET', '/room-types'),
+
+  getRoomType: (id) =>
+    apiRequest('GET', `/room-types/${id}`),
+
   getRoomTypes: (hotelId) =>
     apiRequest('GET', `/hotels/${hotelId}/room-types`),
 
@@ -60,6 +66,9 @@ const API = {
   getBooking: (id) =>
     apiRequest('GET', `/bookings/${id}`),
 
+  getAllBookings: () =>
+    apiRequest('GET', '/bookings'),
+
   getGuestBookings: (guestId) =>
     apiRequest('GET', `/guests/${guestId}/bookings`),
 
@@ -88,7 +97,7 @@ const API = {
 
   /* ── PRICING ──────────────────────────────────────────── */
   getPricingRules: (roomTypeId) =>
-    apiRequest('GET', `/room-types/${roomTypeId}/pricing`),
+    apiRequest('GET', `/pricing-rules/room-type/${roomTypeId}`),
 
   createPricingRule: (data) =>
     apiRequest('POST', '/pricing-rules', data),
@@ -101,10 +110,10 @@ const API = {
 
   /* ── REPORTS ──────────────────────────────────────────── */
   getOccupancyReport: ({ hotelId, from, to }) =>
-    apiRequest('GET', `/admin/reports/occupancy?hotelId=${hotelId}&from=${from}&to=${to}`),
+    apiRequest('GET', `/admin/reports/occupancy?hotelId=${encodeURIComponent(hotelId || '')}&from=${encodeURIComponent(from || '')}&to=${encodeURIComponent(to || '')}`),
 
   getRevenueReport: ({ hotelId, from, to }) =>
-    apiRequest('GET', `/admin/reports/revenue?hotelId=${hotelId}&from=${from}&to=${to}`),
+    apiRequest('GET', `/admin/reports/revenue?hotelId=${encodeURIComponent(hotelId || '')}&from=${encodeURIComponent(from || '')}&to=${encodeURIComponent(to || '')}`),
 
   getDashboardStats: () =>
     apiRequest('GET', '/admin/dashboard/stats'),
